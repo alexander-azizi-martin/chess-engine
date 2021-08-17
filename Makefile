@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -I include
-DEV_CFLAGS = -g -Wall
+DEV_CFLAGS = -g -Wall -Werror
 PRO_CFLAGS = -O2 -fwhole-program
 
 SRC = $(wildcard src/*.c)
