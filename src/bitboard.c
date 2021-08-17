@@ -61,7 +61,7 @@ static const int bit_scan_forward_index[64] = {
  * @return index (0..63) of least significant one bit
  */
 static int bitScanForward(U64 bb) {
-   const U64 debruijn64 = C64(0x03f79d71b4cb0a89);
+   const U64 debruijn64 = 0x03f79d71b4cb0a89;
    return bit_scan_forward_index[((bb ^ (bb-1)) * debruijn64) >> 58];
 }
 

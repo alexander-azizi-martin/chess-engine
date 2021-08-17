@@ -2,6 +2,7 @@
 #define LOOKUP_TABLES_H
 
 #include "defs.h"
+#include "bitboard.h"
 
 Bitboard clear_rank[8] = {
 	0b1111111111111111111111111111111111111111111111111111111100000000,

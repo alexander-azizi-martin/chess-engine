@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include "defs.h"
-#include "chessboard.h"
 
 typedef U32 Move;
 
