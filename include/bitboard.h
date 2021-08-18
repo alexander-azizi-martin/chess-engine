@@ -13,23 +13,23 @@ Representation of a chess bitboard:
 2 | 8 	9 	10 	11 	12 	13 	14 	15
 1 | 0 	1 	2 	3 	4 	5 	6 	7
   --------------------------------
-	A   B   C   D   E   F   G   H
+	  A   B   C   D   E   F   G   H
 */
 
 #include "defs.h"
 
 typedef U64 Bitboard;
 
-unsigned int bitboard_count(Bitboard board);
-
-void bitboard_print(Bitboard board);
-
 typedef struct 
 {
   U8 indices[64];
   U8 size;
-} BitList;
+} BitIndices;
 
-BitList bitboard_index(Bitboard board);
+void bitboard_index(BitIndices *bits, Bitboard board);
+
+int bitboard_count(Bitboard board);
+
+void bitboard_print(Bitboard board);
 
 #endif
