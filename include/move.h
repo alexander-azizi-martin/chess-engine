@@ -18,15 +18,15 @@ typedef enum
 	ROCK_PROMOTION,
 } MoveFlags;
 
-Move move_init(Square origin, Square target, PieceType piece, PieceType capturedPiece, MoveFlags flags);
+Move move_init(Square origin, Square target, Piece piece, Piece capturedPiece, MoveFlags flags);
 
 Square move_get_origin(Move move);
 
 Square move_get_target(Move move);
 
-PieceType move_get_piece(Move move);
+Piece move_get_piece(Move move);
 
-PieceType move_get_capture(Move move);
+Piece move_get_capture(Move move);
 
 bool move_is_capture(Move move);
 

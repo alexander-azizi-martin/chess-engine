@@ -7,24 +7,27 @@
 
 typedef struct
 {
-	Bitboard pieces[2][6];
+	Bitboard pieces[14];
 
-	/* Commonly derived positions */
-	Bitboard all_white_pieces;
-	Bitboard all_black_pieces;
-	Bitboard all_pieces;
+	Bitboard occupied_squares;
+	Bitboard empty_squares;
 
-	/* Moves */
 	Move moves_played[2048];
 	int num_moves;
 } ChessBoard;
 
-ChessBoard *chessboard_init(string fen_str);
+void chessboard_init(ChessBoard *board, string fen_str);
 
-void chessboard_print(ChessBoard *board);
+Piece chessboard_get_piece(ChessBoard *board, Bitboard index);
 
 void chessboard_make_move(ChessBoard *board, Move move);
 
 void chessboard_undo_move(ChessBoard *board);
+
+void chessboard_print(ChessBoard *board);
+
+Piece fen_to_piece(char f);
+
+char piece_to_fen(Piece p);
 
 #endif

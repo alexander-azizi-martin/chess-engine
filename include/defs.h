@@ -11,20 +11,24 @@ typedef uint64_t U64;
 
 typedef enum 
 {
+    WHITE_PAWNS,
+    WHITE_ROOKS,
+    WHITE_KNIGHTS,
+    WHITE_BISHOPS,
+    WHITE_QUEEN,
+    WHITE_KING,
+    BLACK_PAWNS,
+    BLACK_ROOKS,
+    BLACK_KNIGHTS,
+    BLACK_BISHOPS,
+    BLACK_QUEEN,
+    BLACK_KING,
     WHITE,
     BLACK,
-} PieceColor;
-
-typedef enum 
-{
     EMPTY,
-    PAWN,
-    ROOK,
-    KNIGHT,
-    BISHOP,
-    QUEEN,
-    KING,
-} PieceType;
+} Piece;
+
+#define PieceColor(p) ((WHITE_PAWNS <= p && p <= ) ? WHITE : BLACK) : (EMPTY));
 
 typedef enum
 {
