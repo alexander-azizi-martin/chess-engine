@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include "defs.h"
 
-typedef U32 Move;
-
 typedef enum
 {
 	QUIET_MOVE,
@@ -13,21 +11,25 @@ typedef enum
 	KING_CASTLE,
 	QUEEN_CASTLE,
 	EN_PASSANT,
+	ROOK_PROMOTION,
 	KNIGHT_PROMOTION,
 	BISHOP_PROMOTION,
-	ROCK_PROMOTION,
+	QUEEN_PROMOTION,
 } MoveFlags;
 
-Move move_init(Square origin, Square target, Piece piece, Piece capturedPiece, MoveFlags flags);
+typedef struct 
+{
+	U8 origin;
+	U8 target;
+	U8 piece;
+	U8 captured_piece;
+	U8 flags;
+} Move;
 
-Square move_get_origin(Move move);
-
-Square move_get_target(Move move);
-
-Piece move_get_piece(Move move);
-
-Piece move_get_capture(Move move);
-
-bool move_is_capture(Move move);
+typedef struct 
+{
+	Move moves[256];
+	int size;
+} GeneratedMoves;
 
 #endif
