@@ -28,8 +28,6 @@ typedef enum
     EMPTY,
 } Piece;
 
-#define PieceColor(p) ((WHITE_PAWNS <= p && p <= ) ? WHITE : BLACK) : (EMPTY));
-
 typedef enum
 {
     RANK_1,

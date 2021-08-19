@@ -15,7 +15,7 @@ static const int bit_scan_forward_index[64] = {
 };
 
 /**
- * Fills the bitlist with the indices of the 1s in the
+ * Fills the bitindicies with the indices of the 1s in the
  * bitboard.
  */
 void bitboard_index(BitIndices *bits, Bitboard board) {
@@ -43,25 +43,23 @@ int bitboard_count(Bitboard board)
 }
 
 /**
- * Prints a formated representation of a bitboard.
+ * Prints a formated representation of the given bitboard.
  */
 void bitboard_print(Bitboard board)
 {
 	char buffer[21];
+	Bitboard index;
 
-	for (int row = 0; row < 8; row++)
+	for (int rank = 0; rank < 8; rank++)
 	{
-		snprintf(buffer, 4, "%i |", 8 - row);
+		snprintf(buffer, 4, "%i |", 8 - rank);
 
-		for (int col = 0; col < 8; col++)
+		for (int file = 0; file < 8; file++)
 		{
-			Bitboard position = (U64)1 << ((7 - row) * 8 + col);
+			index = (U64)1 << ((7 - rank) * 8 + file);
 
-			buffer[3 + col * 2] = ' ';
-			if (board & position)
-				buffer[(3 + col * 2) + 1] = '1';
-			else
-				buffer[(3 + col * 2) + 1] = '0';
+			buffer[3 + file * 2] = ' ';
+			buffer[(3 + file * 2) + 1] = (board & index) ? '1' : '0';
 		}
 
 		buffer[19] = '\n';
