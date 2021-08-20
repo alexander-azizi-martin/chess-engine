@@ -13,17 +13,25 @@ static const int bit_scan_forward_index[64] = {
    25, 39, 14, 33, 19, 30,  9, 24,
    13, 18,  8, 12,  7,  6,  5, 63,
 };
+/**
+ * Returns the index of the LSB in the given board.
+ */
+int bitboard_scan_forward(Bitboard board) 
+{
+	return bit_scan_forward_index[((board ^ (board-1)) * 0x03f79d71b4cb0a89) >> 58];
+}
 
 /**
  * Fills the bitindicies with the indices of the 1s in the
  * bitboard.
  */
-void bitboard_index(BitIndices *bits, Bitboard board) {
+void bitboard_index(BitIndices *bits, Bitboard board) 
+{
 	bits->size = 0;
 
-	while (board) {
-		// Gets the index (0...63) of the LSB in board
-		bits->indices[bits->size++] = bit_scan_forward_index[((board ^ (board-1)) * 0x03f79d71b4cb0a89) >> 58];
+	while (board) 
+	{
+		bits->indices[bits->size++] = bitboard_scan_forward(board);
 
 		board &= board - 1;
 	}
@@ -47,29 +55,16 @@ int bitboard_count(Bitboard board)
  */
 void bitboard_print(Bitboard board)
 {
-	char buffer[21];
-	Bitboard index;
-
-	for (int rank = 0; rank < 8; rank++)
+	for (int rank = RANK_8; rank >= RANK_1; rank--)
 	{
-		snprintf(buffer, 4, "%i |", 8 - rank);
-
-		for (int file = 0; file < 8; file++)
+		printf("%i |", rank + 1);
+		for (int file = FILE_A; file <= FILE_H; file++)
 		{
-			index = (U64)1 << ((7 - rank) * 8 + file);
-
-			buffer[3 + file * 2] = ' ';
-			buffer[(3 + file * 2) + 1] = (board & index) ? '1' : '0';
+			printf(" %c", (board & FileRankToSquare(file, rank)) ? '1' : '0');
 		}
-
-		buffer[19] = '\n';
-		buffer[20] = '\0';
-		printf(buffer);
+		printf("\n");
 	}
 
-	strcpy(buffer, "   ----------------\n");
-	printf(buffer);
-
-	strcpy(buffer, "    A B C D E F G H\n");
-	printf(buffer);
+	printf("   ----------------\n");
+	printf("    A B C D E F G H\n");
 }

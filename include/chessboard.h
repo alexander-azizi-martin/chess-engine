@@ -5,15 +5,28 @@
 #include "bitboard.h"
 #include "move.h"
 
+typedef enum 
+{
+	WHITE_KING_SIDE = 1,
+	WHITE_QUEEN_SIDE = 2,
+	BLACk_KING_SIDE = 4,
+	BLACK_QUEEN_SIDE = 8,
+} CastlePermissions;
+
 typedef struct
 {
 	Bitboard pieces[14];
 
 	Bitboard occupied_squares;
 	Bitboard empty_squares;
+	Bitboard en_passent;
 
-	Move moves_played[2048];
-	int num_moves;
+	int castle_permission;
+
+	int num_full_moves;
+	int num_half_moves;
+
+	int current_color;
 } ChessBoard;
 
 void chessboard_init(ChessBoard *board, string fen_str);

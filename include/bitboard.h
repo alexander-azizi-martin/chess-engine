@@ -26,6 +26,8 @@ typedef struct
   U8 size;
 } BitIndices;
 
+int bitboard_scan_forward(Bitboard board);
+
 void bitboard_index(BitIndices *bits, Bitboard board);
 
 int bitboard_count(Bitboard board);

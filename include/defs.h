@@ -9,8 +9,13 @@ typedef uint8_t U8;
 typedef uint32_t U32;
 typedef uint64_t U64;
 
-typedef enum 
+#define FileRankToSquare(f, r) ((U64)1 << ((r) * 8 + (f)))
+#define PieceColor(p) ((p & 0x8) != 0)
+
+typedef enum
 {
+    WHITE,
+    BLACK,
     WHITE_PAWNS,
     WHITE_ROOKS,
     WHITE_KNIGHTS,
@@ -23,8 +28,6 @@ typedef enum
     BLACK_BISHOPS,
     BLACK_QUEEN,
     BLACK_KING,
-    WHITE,
-    BLACK,
     EMPTY,
 } Piece;
 
