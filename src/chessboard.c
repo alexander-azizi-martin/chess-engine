@@ -8,8 +8,10 @@
 /**
  * Initializes a chessboard's position with a fen stirng.
  */
-void chessboard_init(ChessBoard *board, string fen_str)
+void chessboard_init(ChessBoard *board, char *fen_str)
 {
+	// TODO: make a separate fen_str to copy into so the original does not get modified
+
 	// Clears board
 	memset(board, 0, sizeof(ChessBoard));
 
@@ -66,7 +68,7 @@ void chessboard_init(ChessBoard *board, string fen_str)
 	// Parses en passent square
 	token = strtok(NULL, " ");
 	if (token[0] != '-') 
-		board->en_passent |= FileRankToSquare(token[0] - 'a', token[1] - '1');
+		board->en_passent_target |= FileRankToSquare(token[0] - 'a', token[1] - '1');
 
 	// Parses full and half move clock
 	token = strtok(NULL, " ");
@@ -94,6 +96,79 @@ Piece chessboard_get_piece(ChessBoard *board, Bitboard square)
 	}
 
 	return EMPTY;
+}
+
+Bitboard wSinglePushTargets(ChessBoard *board) {
+   return (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
+}
+
+Bitboard wDoublePushTargets(ChessBoard *board) {
+   Bitboard single_pushs = wSinglePushTargets(board);
+   return (single_pushs << 8) & board->empty_squares & MASK_RANK[RANK_4];
+}
+
+Bitboard bSinglePushTargets(ChessBoard *board) {
+   return (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
+}
+
+Bitboard bDoublePushTargets(ChessBoard *board) {
+   Bitboard single_pushs = bSinglePushTargets(board);
+   return (single_pushs >> 8) & board->empty_squares & MASK_RANK[RANK_5];
+}
+
+void chessboard_generate_pawn_moves(ChessBoard *board, GeneratedMoves *moves)
+{
+	BitIndices bits;
+	bool is_white = board->current_color == WHITE;
+
+	// Generates moves for a pawn single push
+	Bitboard single_push_targets = (is_white) ? wSinglePushTargets(board) : bSinglePushTargets(board);
+	bitboard_index(&bits, single_push_targets);
+	for (int i = 0; i < bits.size; i++)
+	{
+		moves->moves[moves->size].origin = bits.indices[i] + (is_white ? -8 : 8);
+		moves->moves[moves->size].target = bits.indices[i];
+		moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
+		moves->moves[moves->size].captured_piece = EMPTY;
+		moves->moves[moves->size++].flags = 0;
+	}
+
+	// Generates moves for a pawn double push
+	Bitboard double_push_targets = (is_white) ? wDoublePushTargets(board) : bDoublePushTargets(board);
+	bitboard_index(&bits, double_push_targets);
+	for (int i = 0; i < bits.size; i++)
+	{
+		moves->moves[moves->size].origin = bits.indices[i] + (is_white ? -16 : 16);
+		moves->moves[moves->size].target = bits.indices[i];
+		moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
+		moves->moves[moves->size].captured_piece = EMPTY;
+		moves->moves[moves->size++].flags = 0;
+	}
+
+	// Generates moves for a pawn attack
+	bitboard_index(&bits, board->pieces[(is_white ? WHITE_PAWNS : BLACK_PAWNS)]);
+	for (int i = 0; i < bits.size; i++) 
+	{
+		// Attack to the left
+		if ((board->pieces[!board->current_color] | board->en_passent_target) & MASK_SQUARE[bits.indices[i] + (is_white ? 7 : -9)] & CLEAR_FILE[FILE_H])
+		{
+			moves->moves[moves->size].origin = bits.indices[i];
+			moves->moves[moves->size].target = bits.indices[i] + (is_white ? 7 : -9);
+			moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
+			moves->moves[moves->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i] + (is_white ? 7 : -9)]);
+			moves->moves[moves->size++].flags = (board->en_passent_target & MASK_SQUARE[bits.indices[i] + (is_white ? 7 : -9)]) ? EN_PASSANT : 0;
+		}
+
+		// Attack to the right
+		if ((board->pieces[!board->current_color] | board->en_passent_target) & MASK_SQUARE[bits.indices[i] + (is_white ? 9 : -7)] & CLEAR_FILE[FILE_A])
+		{
+			moves->moves[moves->size].origin = bits.indices[i];
+			moves->moves[moves->size].target = bits.indices[i] + (is_white ? 9 : -7);
+			moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
+			moves->moves[moves->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i] + (is_white ? 9 : -7)]);
+			moves->moves[moves->size++].flags = (board->en_passent_target & MASK_SQUARE[bits.indices[i] + (is_white ? 9 : -7)]) ? EN_PASSANT : 0;
+		}
+	}
 }
 
 /**

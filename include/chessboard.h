@@ -19,7 +19,7 @@ typedef struct
 
 	Bitboard occupied_squares;
 	Bitboard empty_squares;
-	Bitboard en_passent;
+	Bitboard en_passent_target;
 
 	int castle_permission;
 
@@ -29,13 +29,15 @@ typedef struct
 	int current_color;
 } ChessBoard;
 
-void chessboard_init(ChessBoard *board, string fen_str);
+void chessboard_init(ChessBoard *board, char *fen_str);
 
 Piece chessboard_get_piece(ChessBoard *board, Bitboard index);
 
 void chessboard_make_move(ChessBoard *board, Move move);
 
 void chessboard_undo_move(ChessBoard *board);
+
+void chessboard_generate_pawn_moves(ChessBoard *board, GeneratedMoves *moves);
 
 void chessboard_print(ChessBoard *board);
 
