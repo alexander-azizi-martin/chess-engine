@@ -14,4 +14,4 @@ build: $(SRC)
 	$(CC) $^ main.c $(CFLAGS) $(PRO_CFLAGS) -o main.exe
 
 run: dev
-	main.exe
+	./main.exe
