@@ -3,13 +3,10 @@
 
 #include <stdint.h>
 
-typedef char* string;
-
 typedef uint8_t U8;
 typedef uint32_t U32;
 typedef uint64_t U64;
 
-#define FileRankToSquare(f, r) ((U64)1 << ((r) * 8 + (f)))
 #define PieceColor(p) ((p & 0x8) != 0)
 
 typedef enum

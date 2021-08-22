@@ -3,14 +3,16 @@
 
 #include "bitboard.h"
 
-Bitboard clear_rank[8];
+#define FileRankToSquare(f, r) (MASK_SQUARE[(r) * 8 + (f)])
 
-Bitboard mask_rank[8];
+Bitboard CLEAR_RANK[8];
 
-Bitboard clear_file[8];
+Bitboard MASK_RANK[8];
 
-Bitboard mask_file[8];
+Bitboard CLEAR_FILE[8];
 
-Bitboard mask_square[64];
+Bitboard MASK_FILE[8];
+
+Bitboard MASK_SQUARE[64];
 
 #endif

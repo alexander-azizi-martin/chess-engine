@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <intrin.h>
 #include "bitboard.h"
+#include "lookup_tables.h"
 
-static const int bit_scan_forward_index[64] = {
+static const int BIT_SCAN_FORWARD_INDEX[64] = {
     0, 47,  1, 56, 48, 27,  2, 60,
    57, 49, 41, 37, 28, 16,  3, 61,
    54, 58, 35, 52, 50, 42, 21, 44,
@@ -18,7 +19,7 @@ static const int bit_scan_forward_index[64] = {
  */
 int bitboard_scan_forward(Bitboard board) 
 {
-	return bit_scan_forward_index[((board ^ (board-1)) * 0x03f79d71b4cb0a89) >> 58];
+	return BIT_SCAN_FORWARD_INDEX[((board ^ (board-1)) * 0x03f79d71b4cb0a89) >> 58];
 }
 
 /**

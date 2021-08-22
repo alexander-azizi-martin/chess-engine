@@ -1,6 +1,6 @@
 #include "lookup_tables.h"
 
-Bitboard clear_rank[8] = {
+Bitboard CLEAR_RANK[8] = {
 	0xffffffffffffff00,
 	0xffffffffffff00ff,
 	0xffffffffff00ffff,
@@ -11,7 +11,7 @@ Bitboard clear_rank[8] = {
 	0x00ffffffffffffff,
 };
 
-Bitboard mask_rank[8] = {
+Bitboard MASK_RANK[8] = {
 	0x00000000000000ff,
 	0x000000000000ff00,
 	0x0000000000ff0000,
@@ -22,7 +22,7 @@ Bitboard mask_rank[8] = {
 	0xff00000000000000,
 };
 
-Bitboard clear_file[8] = {
+Bitboard CLEAR_FILE[8] = {
 	0xfefefefefefefefe,
 	0xfdfdfdfdfdfdfdfd,
 	0xfbfbfbfbfbfbfbfb,
@@ -33,7 +33,7 @@ Bitboard clear_file[8] = {
 	0x7f7f7f7f7f7f7f7f,
 };
 
-Bitboard mask_file[8] = {
+Bitboard MASK_FILE[8] = {
 	0x0101010101010101,
 	0x0202020202020202,
 	0x0404040404040404,
@@ -44,7 +44,7 @@ Bitboard mask_file[8] = {
 	0x8080808080808080,
 };
 
-Bitboard mask_square[64] = {
+Bitboard MASK_SQUARE[64] = {
 	0x0000000000000001,
 	0x0000000000000002,
 	0x0000000000000004,
