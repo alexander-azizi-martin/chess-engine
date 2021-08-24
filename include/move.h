@@ -10,7 +10,6 @@ typedef enum
 	PAWN_PUSH,
 	KING_CASTLE,
 	QUEEN_CASTLE,
-	EN_PASSANT,
 	ROOK_PROMOTION,
 	KNIGHT_PROMOTION,
 	BISHOP_PROMOTION,
@@ -29,7 +28,7 @@ typedef struct
 typedef struct 
 {
 	Move moves[256];
-	int size;
+	U8 size;
 } GeneratedMoves;
 
 #endif

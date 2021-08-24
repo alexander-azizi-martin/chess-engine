@@ -10,13 +10,15 @@
  */
 void chessboard_init(ChessBoard *board, char *fen_str)
 {
-	// TODO: make a separate fen_str to copy into so the original does not get modified
-
 	// Clears board
 	memset(board, 0, sizeof(ChessBoard));
 
+	// Copies fen_str into a local variables to avoid modifing it through strtok
+	char fen_cpy[100];
+	strncpy(fen_cpy, fen_str, sizeof(fen_cpy));
+
 	// Parses pieces in fen string
-	char *token = strtok(fen_str, " ");
+	char *token = strtok(fen_cpy, " ");
 	for (int i = 0, rank = RANK_8, file = FILE_A; token[i] != '\0'; i++)
 	{
 		if (token[i] == '/')
@@ -98,76 +100,117 @@ Piece chessboard_get_piece(ChessBoard *board, Bitboard square)
 	return EMPTY;
 }
 
-Bitboard wSinglePushTargets(ChessBoard *board) {
-   return (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
-}
-
-Bitboard wDoublePushTargets(ChessBoard *board) {
-   Bitboard single_pushs = wSinglePushTargets(board);
-   return (single_pushs << 8) & board->empty_squares & MASK_RANK[RANK_4];
-}
-
-Bitboard bSinglePushTargets(ChessBoard *board) {
-   return (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
-}
-
-Bitboard bDoublePushTargets(ChessBoard *board) {
-   Bitboard single_pushs = bSinglePushTargets(board);
-   return (single_pushs >> 8) & board->empty_squares & MASK_RANK[RANK_5];
-}
-
-void chessboard_generate_pawn_moves(ChessBoard *board, GeneratedMoves *moves)
+/**
+ * Generates all pseudo legal moves for black pawns.
+ */
+void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 {
 	BitIndices bits;
-	bool is_white = board->current_color == WHITE;
 
-	// Generates moves for a pawn single push
-	Bitboard single_push_targets = (is_white) ? wSinglePushTargets(board) : bSinglePushTargets(board);
-	bitboard_index(&bits, single_push_targets);
-	for (int i = 0; i < bits.size; i++)
+	// Single pawn push
+	Bitboard target_squares = (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
 	{
-		moves->moves[moves->size].origin = bits.indices[i] + (is_white ? -8 : 8);
-		moves->moves[moves->size].target = bits.indices[i];
-		moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
-		moves->moves[moves->size].captured_piece = EMPTY;
-		moves->moves[moves->size++].flags = 0;
+		m->moves[m->size].origin = bits.indices[i] + 8;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = BLACK_PAWNS;
+		m->moves[m->size].captured_piece = EMPTY;
+		m->moves[m->size].flags = 0;
 	}
 
-	// Generates moves for a pawn double push
-	Bitboard double_push_targets = (is_white) ? wDoublePushTargets(board) : bDoublePushTargets(board);
-	bitboard_index(&bits, double_push_targets);
-	for (int i = 0; i < bits.size; i++)
+	// Double pawn push
+	target_squares = (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
+	target_squares = (target_squares >> 8) & board->empty_squares & MASK_RANK[RANK_5];
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
 	{
-		moves->moves[moves->size].origin = bits.indices[i] + (is_white ? -16 : 16);
-		moves->moves[moves->size].target = bits.indices[i];
-		moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
-		moves->moves[moves->size].captured_piece = EMPTY;
-		moves->moves[moves->size++].flags = 0;
+		m->moves[m->size].origin = bits.indices[i] + 16;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = BLACK_PAWNS;
+		m->moves[m->size].captured_piece = EMPTY;
+		m->moves[m->size].flags = 0;
 	}
 
-	// Generates moves for a pawn attack
-	bitboard_index(&bits, board->pieces[(is_white ? WHITE_PAWNS : BLACK_PAWNS)]);
-	for (int i = 0; i < bits.size; i++) 
+	// East pawn attack
+	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[BLACK_PAWNS] >> 7) & CLEAR_FILE[FILE_A];
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
 	{
-		// Attack to the left
-		if ((board->pieces[!board->current_color] | board->en_passent_target) & MASK_SQUARE[bits.indices[i] + (is_white ? 7 : -9)] & CLEAR_FILE[FILE_H])
-		{
-			moves->moves[moves->size].origin = bits.indices[i];
-			moves->moves[moves->size].target = bits.indices[i] + (is_white ? 7 : -9);
-			moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
-			moves->moves[moves->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i] + (is_white ? 7 : -9)]);
-			moves->moves[moves->size++].flags = (board->en_passent_target & MASK_SQUARE[bits.indices[i] + (is_white ? 7 : -9)]) ? EN_PASSANT : 0;
-		}
+		m->moves[m->size].origin = bits.indices[i] + 7;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = BLACK_PAWNS;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);;
+		m->moves[m->size].flags = 0;
+	}
 
-		// Attack to the right
-		if ((board->pieces[!board->current_color] | board->en_passent_target) & MASK_SQUARE[bits.indices[i] + (is_white ? 9 : -7)] & CLEAR_FILE[FILE_A])
-		{
-			moves->moves[moves->size].origin = bits.indices[i];
-			moves->moves[moves->size].target = bits.indices[i] + (is_white ? 9 : -7);
-			moves->moves[moves->size].piece = (is_white ? WHITE_PAWNS : BLACK_PAWNS);
-			moves->moves[moves->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i] + (is_white ? 9 : -7)]);
-			moves->moves[moves->size++].flags = (board->en_passent_target & MASK_SQUARE[bits.indices[i] + (is_white ? 9 : -7)]) ? EN_PASSANT : 0;
-		}
+	// West pawn attack
+	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[BLACK_PAWNS] >> 9) & CLEAR_FILE[FILE_H];
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] + 9;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = BLACK_PAWNS;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+}
+
+/**
+ * Generates all pseudo legal moves for white pawns.
+ */
+void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
+{
+	BitIndices bits;
+
+	// Single pawn push
+	Bitboard target_squares = (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 8;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = WHITE_PAWNS;
+		m->moves[m->size].captured_piece = EMPTY;
+		m->moves[m->size].flags = 0;
+	}
+
+	// Double pawn push
+	target_squares = (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
+	target_squares = (target_squares << 8) & board->empty_squares & MASK_RANK[RANK_4];
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 16;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = WHITE_PAWNS;
+		m->moves[m->size].captured_piece = EMPTY;
+		m->moves[m->size].flags = 0;
+	}
+
+	// East pawn attack
+	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[WHITE_PAWNS] << 9) & CLEAR_FILE[FILE_A];
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 9;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = WHITE_PAWNS;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);;
+		m->moves[m->size].flags = 0;
+	}
+
+	// West pawn attack
+	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[WHITE_PAWNS] << 7) & CLEAR_FILE[FILE_H];
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 7;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = WHITE_PAWNS;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
 	}
 }
 

@@ -37,7 +37,9 @@ void chessboard_make_move(ChessBoard *board, Move move);
 
 void chessboard_undo_move(ChessBoard *board);
 
-void chessboard_generate_pawn_moves(ChessBoard *board, GeneratedMoves *moves);
+void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m);
+
+void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m);
 
 void chessboard_print(ChessBoard *board);
 
