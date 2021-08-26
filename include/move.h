@@ -6,8 +6,6 @@
 
 typedef enum
 {
-	QUIET_MOVE,
-	PAWN_PUSH,
 	KING_CASTLE,
 	QUEEN_CASTLE,
 	ROOK_PROMOTION,
@@ -20,8 +18,8 @@ typedef struct
 {
 	U8 origin;
 	U8 target;
-	U8 piece;
-	U8 captured_piece;
+	U8 piece : 4;
+	U8 captured_piece : 4;
 	U8 flags;
 } Move;
 

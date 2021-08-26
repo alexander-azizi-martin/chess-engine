@@ -20,6 +20,7 @@ typedef struct
 	Bitboard occupied_squares;
 	Bitboard empty_squares;
 	Bitboard en_passent_target;
+	Bitboard available_squares;
 
 	int castle_permission;
 
@@ -40,6 +41,10 @@ void chessboard_undo_move(ChessBoard *board);
 void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m);
 
 void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m);
+
+void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m);
+
+void chessboard_generate_king_moves(ChessBoard *board, GeneratedMoves *m);
 
 void chessboard_print(ChessBoard *board);
 

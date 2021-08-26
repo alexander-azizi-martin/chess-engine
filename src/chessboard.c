@@ -80,6 +80,7 @@ void chessboard_init(ChessBoard *board, char *fen_str)
 
 	board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
 	board->empty_squares = ~board->occupied_squares;
+	board->available_squares = ~board->pieces[board->current_color];
 }
 
 /**
@@ -100,6 +101,8 @@ Piece chessboard_get_piece(ChessBoard *board, Bitboard square)
 	return EMPTY;
 }
 
+// TODO: make a function for adding the things to a generated move list
+
 /**
  * Generates all pseudo legal moves for black pawns.
  */
@@ -107,7 +110,7 @@ void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 {
 	BitIndices bits;
 
-	// Single pawn push
+	// Single black pawn push
 	Bitboard target_squares = (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
@@ -119,7 +122,7 @@ void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].flags = 0;
 	}
 
-	// Double pawn push
+	// Double black pawn push
 	target_squares = (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
 	target_squares = (target_squares >> 8) & board->empty_squares & MASK_RANK[RANK_5];
 	bitboard_index(&bits, target_squares);
@@ -132,7 +135,7 @@ void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].flags = 0;
 	}
 
-	// East pawn attack
+	// East black pawn attack
 	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[BLACK_PAWNS] >> 7) & CLEAR_FILE[FILE_A];
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
@@ -140,11 +143,11 @@ void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].origin = bits.indices[i] + 7;
 		m->moves[m->size].target = bits.indices[i];
 		m->moves[m->size].piece = BLACK_PAWNS;
-		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
 		m->moves[m->size].flags = 0;
 	}
 
-	// West pawn attack
+	// West black pawn attack
 	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[BLACK_PAWNS] >> 9) & CLEAR_FILE[FILE_H];
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
@@ -164,7 +167,7 @@ void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 {
 	BitIndices bits;
 
-	// Single pawn push
+	// Single white pawn push
 	Bitboard target_squares = (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
@@ -176,7 +179,7 @@ void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].flags = 0;
 	}
 
-	// Double pawn push
+	// Double white pawn push
 	target_squares = (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
 	target_squares = (target_squares << 8) & board->empty_squares & MASK_RANK[RANK_4];
 	bitboard_index(&bits, target_squares);
@@ -189,7 +192,7 @@ void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].flags = 0;
 	}
 
-	// East pawn attack
+	// East white pawn attack (/)
 	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[WHITE_PAWNS] << 9) & CLEAR_FILE[FILE_A];
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
@@ -197,11 +200,11 @@ void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].origin = bits.indices[i] - 9;
 		m->moves[m->size].target = bits.indices[i];
 		m->moves[m->size].piece = WHITE_PAWNS;
-		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
 		m->moves[m->size].flags = 0;
 	}
 
-	// West pawn attack
+	// West white pawn attack (\)
 	target_squares = (board->pieces[WHITE] | board->en_passent_target) & (board->pieces[WHITE_PAWNS] << 7) & CLEAR_FILE[FILE_H];
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
@@ -212,6 +215,140 @@ void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
 		m->moves[m->size].flags = 0;
 	}
+
+	// TODO: add moves for promotion
+}
+
+/**
+ * Generates all pseudo legal moves for knights.
+ */
+void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m)
+{
+	BitIndices bits;
+	int knights = (board->current_color == WHITE) ? WHITE_KNIGHTS : BLACK_KNIGHTS;
+
+	// Knight attack north north east
+	Bitboard target_squares = (board->pieces[knights] << 17) & CLEAR_FILE[FILE_A] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 17;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// Knight attack north east east
+	target_squares = (board->pieces[knights] << 10) & CLEAR_FILE[FILE_A] & CLEAR_FILE[FILE_B] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 10;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// Knight attack north north west
+	target_squares = (board->pieces[knights] << 15) & CLEAR_FILE[FILE_H] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 15;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// Knight attack north west west
+	target_squares = (board->pieces[knights] << 6) & CLEAR_FILE[FILE_G] & CLEAR_FILE[FILE_H] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] - 6;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// Knight attack south east east
+	target_squares = (board->pieces[knights] >> 6) & CLEAR_FILE[FILE_A] & CLEAR_FILE[FILE_B] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] + 6;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// Knight attack south south east
+	target_squares = (board->pieces[knights] >> 15) & CLEAR_FILE[FILE_A] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] + 15;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+
+	// Knight attack south west west
+	target_squares = (board->pieces[knights] >> 10) & CLEAR_FILE[FILE_G] & CLEAR_FILE[FILE_H] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] + 10;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// Knight attack south south west
+	target_squares = (board->pieces[knights] >> 17) & CLEAR_FILE[FILE_H] & board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = bits.indices[i] + 17;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = knights;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+}
+
+/**
+ * Generates all pseudo legal moves for the king.
+ */
+void chessboard_generate_king_moves(ChessBoard *board, GeneratedMoves *m)
+{
+	BitIndices bits;
+	int king = (board->current_color == WHITE) ? WHITE_KING : BLACK_KING;
+	int king_square = bitboard_scan_forward(board->pieces[king]);
+
+	// King attacks
+	Bitboard target_squares = ((board->pieces[king] << 1) & CLEAR_FILE[FILE_A]) | ((board->pieces[king] >> 1) & CLEAR_FILE[FILE_H]);
+	target_squares |= ((board->pieces[king] | target_squares) << 8) | ((board->pieces[king] | target_squares) >> 8);
+	target_squares &= board->available_squares;
+	bitboard_index(&bits, target_squares);
+	for (int i = 0; i < bits.size; i++, m->size++)
+	{
+		m->moves[m->size].origin = king_square;
+		m->moves[m->size].target = bits.indices[i];
+		m->moves[m->size].piece = king;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
+		m->moves[m->size].flags = 0;
+	}
+
+	// TODO: implement castling functionality
 }
 
 /**
