@@ -18,7 +18,7 @@ Representation of a chess bitboard:
 
 #include "defs.h"
 
-typedef U64 Bitboard;
+typedef U64 BitBoard;
 
 typedef struct 
 {
@@ -26,12 +26,12 @@ typedef struct
   U8 size;
 } BitIndices;
 
-int bitboard_scan_forward(Bitboard board);
+int bitboard_scan_forward(BitBoard board);
 
-void bitboard_index(BitIndices *bits, Bitboard board);
+void bitboard_index(BitIndices *bits, BitBoard board);
 
-int bitboard_count(Bitboard board);
+int bitboard_count(BitBoard board);
 
-void bitboard_print(Bitboard board);
+void bitboard_print(BitBoard board);
 
 #endif

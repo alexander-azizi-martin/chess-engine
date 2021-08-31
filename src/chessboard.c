@@ -86,7 +86,7 @@ void chessboard_init(ChessBoard *board, char *fen_str)
 /**
  * Returns the piece on the given square.
  */
-Piece chessboard_get_piece(ChessBoard *board, Bitboard square) 
+Piece chessboard_get_piece(ChessBoard *board, BitBoard square) 
 {
 	if (board->empty_squares & square)
 		return EMPTY;
@@ -111,14 +111,14 @@ void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 	BitIndices bits;
 
 	// Single black pawn push
-	Bitboard target_squares = (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
+	BitBoard target_squares = (board->pieces[BLACK_PAWNS] >> 8) & board->empty_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
 		m->moves[m->size].origin = bits.indices[i] + 8;
 		m->moves[m->size].target = bits.indices[i];
 		m->moves[m->size].piece = BLACK_PAWNS;
-		m->moves[m->size].captured_piece = EMPTY;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
 		m->moves[m->size].flags = 0;
 	}
 
@@ -131,7 +131,7 @@ void chessboard_generate_black_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 		m->moves[m->size].origin = bits.indices[i] + 16;
 		m->moves[m->size].target = bits.indices[i];
 		m->moves[m->size].piece = BLACK_PAWNS;
-		m->moves[m->size].captured_piece = EMPTY;
+		m->moves[m->size].captured_piece = chessboard_get_piece(board, MASK_SQUARE[bits.indices[i]]);
 		m->moves[m->size].flags = 0;
 	}
 
@@ -168,7 +168,7 @@ void chessboard_generate_white_pawn_moves(ChessBoard *board, GeneratedMoves *m)
 	BitIndices bits;
 
 	// Single white pawn push
-	Bitboard target_squares = (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
+	BitBoard target_squares = (board->pieces[WHITE_PAWNS] << 8) & board->empty_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
@@ -228,7 +228,7 @@ void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m)
 	int knights = (board->current_color == WHITE) ? WHITE_KNIGHTS : BLACK_KNIGHTS;
 
 	// Knight attack north north east
-	Bitboard target_squares = (board->pieces[knights] << 17) & CLEAR_FILE[FILE_A] & board->available_squares;
+	BitBoard target_squares = (board->pieces[knights] << 17) & CLEAR_FILE[FILE_A] & board->available_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
@@ -240,7 +240,7 @@ void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m)
 	}
 
 	// Knight attack north east east
-	target_squares = (board->pieces[knights] << 10) & CLEAR_FILE[FILE_A] & CLEAR_FILE[FILE_B] & board->available_squares;
+	target_squares = (board->pieces[knights] << 10) & CLEAR_FILE_AB & board->available_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
@@ -264,7 +264,7 @@ void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m)
 	}
 
 	// Knight attack north west west
-	target_squares = (board->pieces[knights] << 6) & CLEAR_FILE[FILE_G] & CLEAR_FILE[FILE_H] & board->available_squares;
+	target_squares = (board->pieces[knights] << 6) & CLEAR_FILE_GH & board->available_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
@@ -276,7 +276,7 @@ void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m)
 	}
 
 	// Knight attack south east east
-	target_squares = (board->pieces[knights] >> 6) & CLEAR_FILE[FILE_A] & CLEAR_FILE[FILE_B] & board->available_squares;
+	target_squares = (board->pieces[knights] >> 6) & CLEAR_FILE_AB & board->available_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
@@ -301,7 +301,7 @@ void chessboard_generate_knight_moves(ChessBoard *board, GeneratedMoves *m)
 
 
 	// Knight attack south west west
-	target_squares = (board->pieces[knights] >> 10) & CLEAR_FILE[FILE_G] & CLEAR_FILE[FILE_H] & board->available_squares;
+	target_squares = (board->pieces[knights] >> 10) & CLEAR_FILE_GH & board->available_squares;
 	bitboard_index(&bits, target_squares);
 	for (int i = 0; i < bits.size; i++, m->size++)
 	{
@@ -335,7 +335,7 @@ void chessboard_generate_king_moves(ChessBoard *board, GeneratedMoves *m)
 	int king_square = bitboard_scan_forward(board->pieces[king]);
 
 	// King attacks
-	Bitboard target_squares = ((board->pieces[king] << 1) & CLEAR_FILE[FILE_A]) | ((board->pieces[king] >> 1) & CLEAR_FILE[FILE_H]);
+	BitBoard target_squares = ((board->pieces[king] << 1) & CLEAR_FILE[FILE_A]) | ((board->pieces[king] >> 1) & CLEAR_FILE[FILE_H]);
 	target_squares |= ((board->pieces[king] | target_squares) << 8) | ((board->pieces[king] | target_squares) >> 8);
 	target_squares &= board->available_squares;
 	bitboard_index(&bits, target_squares);

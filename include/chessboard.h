@@ -15,12 +15,12 @@ typedef enum
 
 typedef struct
 {
-	Bitboard pieces[14];
+	BitBoard pieces[14];
 
-	Bitboard occupied_squares;
-	Bitboard empty_squares;
-	Bitboard en_passent_target;
-	Bitboard available_squares;
+	BitBoard occupied_squares;
+	BitBoard empty_squares;
+	BitBoard en_passent_target;
+	BitBoard available_squares;
 
 	int castle_permission;
 
@@ -32,7 +32,7 @@ typedef struct
 
 void chessboard_init(ChessBoard *board, char *fen_str);
 
-Piece chessboard_get_piece(ChessBoard *board, Bitboard index);
+Piece chessboard_get_piece(ChessBoard *board, BitBoard index);
 
 void chessboard_make_move(ChessBoard *board, Move move);
 

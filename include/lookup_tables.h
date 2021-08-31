@@ -5,14 +5,18 @@
 
 #define FileRankToSquare(f, r) (MASK_SQUARE[(r) * 8 + (f)])
 
-Bitboard CLEAR_RANK[8];
+const BitBoard CLEAR_RANK[8];
 
-Bitboard MASK_RANK[8];
+const BitBoard MASK_RANK[8];
 
-Bitboard CLEAR_FILE[8];
+const BitBoard CLEAR_FILE[8];
 
-Bitboard MASK_FILE[8];
+const BitBoard CLEAR_FILE_AB;
 
-Bitboard MASK_SQUARE[64];
+const BitBoard CLEAR_FILE_GH;
+
+const BitBoard MASK_FILE[8];
+
+const BitBoard MASK_SQUARE[64];
 
 #endif

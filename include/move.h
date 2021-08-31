@@ -1,7 +1,6 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include <stdbool.h>
 #include "defs.h"
 
 typedef enum

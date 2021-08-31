@@ -4,29 +4,30 @@
 #include "bitboard.h"
 #include "lookup_tables.h"
 
-static const int BIT_SCAN_FORWARD_INDEX[64] = {
-    0, 47,  1, 56, 48, 27,  2, 60,
-   57, 49, 41, 37, 28, 16,  3, 61,
-   54, 58, 35, 52, 50, 42, 21, 44,
-   38, 32, 29, 23, 17, 11,  4, 62,
-   46, 55, 26, 59, 40, 36, 15, 53,
-   34, 51, 20, 43, 31, 22, 10, 45,
-   25, 39, 14, 33, 19, 30,  9, 24,
-   13, 18,  8, 12,  7,  6,  5, 63,
-};
 /**
  * Returns the index of the LSB in the given board.
  */
-int bitboard_scan_forward(Bitboard board) 
+int bitboard_scan_forward(BitBoard board) 
 {
-	return BIT_SCAN_FORWARD_INDEX[((board ^ (board-1)) * 0x03f79d71b4cb0a89) >> 58];
+	static const int bit_scan_forward_index[64] = {
+		0, 47,  1, 56, 48, 27,  2, 60,
+		57, 49, 41, 37, 28, 16,  3, 61,
+		54, 58, 35, 52, 50, 42, 21, 44,
+		38, 32, 29, 23, 17, 11,  4, 62,
+		46, 55, 26, 59, 40, 36, 15, 53,
+		34, 51, 20, 43, 31, 22, 10, 45,
+		25, 39, 14, 33, 19, 30,  9, 24,
+		13, 18,  8, 12,  7,  6,  5, 63,
+	};
+
+	return bit_scan_forward_index[((board ^ (board-1)) * 0x03f79d71b4cb0a89) >> 58];
 }
 
 /**
  * Fills the bitindicies with the indices of the 1s in the
  * bitboard.
  */
-void bitboard_index(BitIndices *bits, Bitboard board) 
+void bitboard_index(BitIndices *bits, BitBoard board) 
 {
 	bits->size = 0;
 
@@ -41,7 +42,7 @@ void bitboard_index(BitIndices *bits, Bitboard board)
 /**
  * Counts the number of 1s in the given bitboard.
  */
-int bitboard_count(Bitboard board)
+int bitboard_count(BitBoard board)
 {
 	int count;
 
@@ -54,7 +55,7 @@ int bitboard_count(Bitboard board)
 /**
  * Prints a formated representation of the given bitboard.
  */
-void bitboard_print(Bitboard board)
+void bitboard_print(BitBoard board)
 {
 	for (int rank = RANK_8; rank >= RANK_1; rank--)
 	{
