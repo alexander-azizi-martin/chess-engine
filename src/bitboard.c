@@ -24,23 +24,19 @@ int bitboard_scan_forward(BitBoard board)
 }
 
 /**
- * Fills the bitindicies with the indices of the 1s in the
- * bitboard.
+ * Returns the index of the LSB and sets it to 0.
  */
-void bitboard_index(BitIndices *bits, BitBoard board) 
+int bitboard_pop(BitBoard *board)
 {
-	bits->size = 0;
+	int index = bitboard_scan_forward(*board);
 
-	while (board) 
-	{
-		bits->indices[bits->size++] = bitboard_scan_forward(board);
+	*board &= *board - 1;
 
-		board &= board - 1;
-	}
+	return index;
 }
 
 /**
- * Counts the number of 1s in the given bitboard.
+ * Returns the number of non zero bits in the given bitboard.
  */
 int bitboard_count(BitBoard board)
 {

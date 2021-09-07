@@ -20,15 +20,9 @@ Representation of a chess bitboard:
 
 typedef U64 BitBoard;
 
-typedef struct 
-{
-  U8 indices[64];
-  U8 size;
-} BitIndices;
-
 int bitboard_scan_forward(BitBoard board);
 
-void bitboard_index(BitIndices *bits, BitBoard board);
+int bitboard_pop(BitBoard *board);
 
 int bitboard_count(BitBoard board);
 
