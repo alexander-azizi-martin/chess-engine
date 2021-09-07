@@ -33,9 +33,9 @@ const BitBoard CLEAR_FILE[8] = {
 	0x7f7f7f7f7f7f7f7f,
 };
 
-const BitBoard CLEAR_FILE_AB = 18229723555195321596ULL;
+const BitBoard CLEAR_FILE_AB = 18229723555195321596u;
 
-const BitBoard CLEAR_FILE_GH = 4557430888798830399ULL;
+const BitBoard CLEAR_FILE_GH = 4557430888798830399u;
 
 const BitBoard MASK_FILE[8] = {
 	0x0101010101010101,
@@ -114,3 +114,86 @@ const BitBoard MASK_SQUARE[64] = {
 	0x4000000000000000,
 	0x8000000000000000,
 };
+
+static BitBoard generate_white_pawn_push_mask(int square)
+{
+	BitBoard attacks = 0;
+
+	attacks |= MASK_SQUARE[square] << 8;
+	attacks |= (attacks << 8) & MASK_RANK[RANK_4];
+
+	return attacks;
+}
+
+static BitBoard generate_black_pawn_push_mask(int square)
+{
+	BitBoard attacks = 0;
+
+	attacks |= MASK_SQUARE[square] >> 8;
+	attacks |= (attacks >> 8) & MASK_RANK[RANK_5];
+
+	return attacks;
+}
+
+static BitBoard generate_white_pawn_attack_mask(int square)
+{
+	BitBoard attacks = 0;
+
+	attacks |= (MASK_SQUARE[square] << 7) & CLEAR_FILE[FILE_H];
+	attacks |= (MASK_SQUARE[square] << 9) & CLEAR_FILE[FILE_A];
+
+	return attacks;
+}
+
+static BitBoard generate_black_pawn_attack_mask(int square)
+{
+	BitBoard attacks = 0;
+
+	attacks |= (MASK_SQUARE[square] >> 9) & CLEAR_FILE[FILE_H];
+	attacks |= (MASK_SQUARE[square] >> 7) & CLEAR_FILE[FILE_A];
+
+	return attacks;
+}
+
+static BitBoard generate_knight_attack_mask(int square)
+{
+	BitBoard attacks = 0;
+
+	attacks |= (MASK_SQUARE[square] << 17) & CLEAR_FILE[FILE_A];
+	attacks |= (MASK_SQUARE[square] << 10) & CLEAR_FILE_AB;
+	attacks |= (MASK_SQUARE[square] >>  6) & CLEAR_FILE_AB;
+	attacks |= (MASK_SQUARE[square] >> 15) & CLEAR_FILE[FILE_A];
+	attacks |= (MASK_SQUARE[square] << 15) & CLEAR_FILE[FILE_H];
+	attacks |= (MASK_SQUARE[square] <<  6) & CLEAR_FILE_GH;
+	attacks |= (MASK_SQUARE[square] >> 10) & CLEAR_FILE_GH;
+	attacks |= (MASK_SQUARE[square] >> 17) & CLEAR_FILE[FILE_H];
+
+	return attacks;
+}
+
+static BitBoard generate_king_attack_mask(int square)
+{
+	BitBoard attacks = 0;
+
+	attacks |= (MASK_SQUARE[square] << 1) & CLEAR_FILE[FILE_A];
+	attacks |= (MASK_SQUARE[square] << 1) & CLEAR_FILE[FILE_H];
+	attacks |= ((MASK_SQUARE[square] | attacks) << 8) | ((MASK_SQUARE[square] | attacks) >> 8);
+
+	return attacks;
+}
+
+void init_lookup_tables()
+{
+	for (int square = 0; square < 64; square++)
+	{
+		MASK_PAWN_PUSHES[WHITE][square] = generate_white_pawn_push_mask(square);
+		MASK_PAWN_PUSHES[BLACK][square] = generate_black_pawn_push_mask(square);
+
+		MASK_PAWN_ATTACKS[WHITE][square] = generate_white_pawn_attack_mask(square);
+		MASK_PAWN_ATTACKS[BLACK][square] = generate_black_pawn_attack_mask(square);
+
+		MASK_KNIGHT_ATTACKS[square] = generate_knight_attack_mask(square);
+
+		MASK_KING_ATTACKS[square] = generate_king_attack_mask(square);
+	}
+}
