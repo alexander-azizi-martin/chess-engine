@@ -19,7 +19,7 @@ typedef struct
 	U8 target;
 	U8 piece : 4;
 	U8 captured_piece : 4;
-	U8 flags;
+	U8 flag;
 } Move;
 
 typedef struct 

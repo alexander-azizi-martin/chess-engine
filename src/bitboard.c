@@ -28,11 +28,24 @@ int bitboard_scan_forward(BitBoard board)
  */
 int bitboard_pop(BitBoard *board)
 {
-	int index = bitboard_scan_forward(*board);
+	if (*board)
+	{
+		int index = bitboard_scan_forward(*board);
 
-	*board &= *board - 1;
+		*board &= *board - 1;
 
-	return index;
+		return index;
+	}
+
+	return -1;
+}
+
+int bitboard_iter(BitBoard *board)
+{
+	static BitBoard saved_board;
+	saved_board = (board == NULL) ? saved_board : *board;
+
+	return bitboard_pop(saved_board);
 }
 
 /**

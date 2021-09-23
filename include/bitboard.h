@@ -24,6 +24,8 @@ int bitboard_scan_forward(BitBoard board);
 
 int bitboard_pop(BitBoard *board);
 
+int bitboard_iter(BitBoard *board);
+
 int bitboard_count(BitBoard board);
 
 void bitboard_print(BitBoard board);
