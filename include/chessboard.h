@@ -38,6 +38,8 @@ void chessboard_make_move(ChessBoard *board, Move move);
 
 void chessboard_undo_move(ChessBoard *board);
 
+void chessboard_generate_moves(ChessBoard *board, MoveList *list);
+
 void chessboard_print(ChessBoard *board);
 
 Piece fen_to_piece(char f);

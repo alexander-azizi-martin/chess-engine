@@ -42,6 +42,9 @@ blocker board variation for each square/piece combo.
 #include "lookup_tables.h"
 #include "bitboard.h"
 
+/**
+ * TODO: write description
+ */
 static BitBoard generate_blocker_board(int index, BitBoard blocker_mask)
 {
     BitBoard blocker_board = 0ULL;

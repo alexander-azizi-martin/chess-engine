@@ -24,7 +24,7 @@ int bitboard_scan_forward(BitBoard board)
 }
 
 /**
- * Returns the index of the LSB and sets it to 0.
+ * Returns the index of the LSB and sets it to 0 or -1 no bits are set.
  */
 int bitboard_pop(BitBoard *board)
 {
@@ -40,12 +40,28 @@ int bitboard_pop(BitBoard *board)
 	return -1;
 }
 
+/**
+ * Used to iterate over the indexies of a bitboard. For the initial call, pass in the bitboard to iterate over, then 
+ * pass NULL for all subsequent calls. Returns -1 when finished iterating.
+ * 
+ * ex:
+ * for(int i = bitboard_iter(board); i != -1; i = bitboard_iter(NULL)) {}
+ */
 int bitboard_iter(BitBoard *board)
 {
 	static BitBoard saved_board;
 	saved_board = (board == NULL) ? saved_board : *board;
 
-	return bitboard_pop(saved_board);
+	if (saved_board)
+	{
+		int index = bitboard_scan_forward(*board);
+
+		saved_board &= saved_board - 1;
+
+		return index;
+	}
+
+	return -1;
 }
 
 /**

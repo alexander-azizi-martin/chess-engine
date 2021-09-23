@@ -22,10 +22,16 @@ typedef struct
 	U8 flag;
 } Move;
 
-typedef struct 
+typedef struct
 {
 	Move moves[256];
 	U8 size;
-} GeneratedMoves;
+} MoveList;
+
+typedef struct
+{
+	Move moves[2048];
+	int size;
+} MoveHistory;
 
 #endif
