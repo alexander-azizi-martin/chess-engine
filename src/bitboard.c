@@ -7,7 +7,7 @@
 /**
  * Returns the index of the LSB in the given board.
  */
-int bitboard_scan_forward(BitBoard board) 
+inline int bitboard_scan_forward(BitBoard board) 
 {
 	static const int bit_scan_forward_index[64] = {
 		0, 47,  1, 56, 48, 27,  2, 60,
@@ -44,6 +44,8 @@ int bitboard_pop(BitBoard *board)
  * Used to iterate over the indexies of a bitboard. For the initial call, pass in the bitboard to iterate over, then 
  * pass NULL for all subsequent calls. Returns -1 when finished iterating.
  * 
+ * Note: This function does not work recursively and only keeps track of a single bitboard at once
+ * 
  * ex:
  * for(int i = bitboard_iter(board); i != -1; i = bitboard_iter(NULL)) {}
  */
@@ -54,7 +56,7 @@ int bitboard_iter(BitBoard *board)
 
 	if (saved_board)
 	{
-		int index = bitboard_scan_forward(*board);
+		int index = bitboard_scan_forward(saved_board);
 
 		saved_board &= saved_board - 1;
 

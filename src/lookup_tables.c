@@ -177,7 +177,7 @@ static BitBoard generate_king_attack_mask(int square)
 /**
  * TODO: write description
  */
-void init_lookup_tables()
+void lookup_tables_init()
 {
 	for (int square = 0; square < 64; square++)
 	{

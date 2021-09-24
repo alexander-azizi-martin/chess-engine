@@ -25,6 +25,6 @@ BitBoard MASK_KNIGHT_ATTACKS[64];
 
 BitBoard MASK_KING_ATTACKS[64];
 
-void init_lookup_tables();
+void lookup_tables_init();
 
 #endif
