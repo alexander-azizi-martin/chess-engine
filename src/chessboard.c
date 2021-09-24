@@ -105,11 +105,35 @@ Piece chessboard_get_piece(ChessBoard *board, BitBoard square)
 /**
  * TODO: write description
  */
+void chessboard_make_move(ChessBoard *board, Move move)
+{
+	BitBoard origin_target = (MASK_SQUARE[move.origin] | MASK_SQUARE[move.target]);
+
+	board->pieces[move.piece] ^= origin_target;
+	board->pieces[board->current_color] ^= origin_target;
+
+	// Makes sure it captured a piece
+	if (move.captured_piece != EMPTY)
+	{
+		board->pieces[move.captured_piece] ^= MASK_SQUARE[move.target];
+		board->pieces[!board->current_color] ^= MASK_SQUARE[move.target];
+	}
+
+	board->current_color = !board->current_color;
+	board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
+	board->empty_squares = ~board->occupied_squares;
+	board->available_squares = ~board->pieces[board->current_color];
+}
+
+/**
+ * TODO: write description
+ */
 static inline void append_moves_by_direction(ChessBoard *board, MoveList *list, BitBoard move_mask, int shift, int piece, int flag)
 {
-	for (int index = bitboard_iter(&move_mask); index != -1; index = bitboard_iter(NULL))
+	int index;
+	while ((index = bitboard_pop(&move_mask)) != -1)
 	{
-		list->moves[list->size++] = (Move) {index - shift, index, piece, chessboard_get_piece(board, index), flag};
+		list->moves[list->size++] = (Move) {index - shift, index, piece, chessboard_get_piece(board, MASK_SQUARE[index]), flag};
 	}
 }
 
@@ -118,9 +142,10 @@ static inline void append_moves_by_direction(ChessBoard *board, MoveList *list, 
  */
 static inline void append_moves_by_piece(ChessBoard *board, MoveList *list, BitBoard move_mask, int origin, int piece, int flag)
 {
-	for (int index = bitboard_iter(&move_mask); index != -1; index = bitboard_iter(NULL))
+	int index;
+	while ((index = bitboard_pop(&move_mask)) != -1)
 	{
-		list->moves[list->size++] = (Move) {origin, index, piece, chessboard_get_piece(board, index), flag};
+		list->moves[list->size++] = (Move) {origin, index, piece, chessboard_get_piece(board, MASK_SQUARE[index]), flag};
 	}
 }
 
@@ -135,7 +160,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
 	int king 	= (board->current_color == WHITE) ? WHITE_KING 		: BLACK_KING;
 	int queen 	= (board->current_color == WHITE) ? WHITE_QUEEN 	: BLACK_QUEEN;
 	int bishops = (board->current_color == WHITE) ? WHITE_BISHOPS 	: BLACK_BISHOPS;
-	int knights = (board->current_color == WHITE) ? WHITE_KNIGHTS 	: WHITE_KNIGHTS;
+	int knights = (board->current_color == WHITE) ? WHITE_KNIGHTS 	: BLACK_KNIGHTS;
 
 	// Generates pawn pushes separately for white and black because their pawns move in opposite directions
 	if (pawns == WHITE_PAWNS)
@@ -167,7 +192,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
 		append_moves_by_direction(board, list, single_pawn_push_promotions, -8, BLACK_PAWNS, KNIGHT_PROMOTION);
 
 		// Doesn't need promotions for double pawn push because a double push can't reach the back rank
-		BitBoard double_pawn_push = single_pawn_push >> 8 & MASK_RANK[RANK_4] & board->empty_squares;
+		BitBoard double_pawn_push = single_pawn_push >> 8 & MASK_RANK[RANK_5] & board->empty_squares;
 		append_moves_by_direction(board, list, double_pawn_push, -16, BLACK_PAWNS, 0);
 	}
 
