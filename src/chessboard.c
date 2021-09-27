@@ -105,7 +105,7 @@ Piece chessboard_get_piece(ChessBoard *board, BitBoard square)
 /**
  * TODO: write description
  */
-void chessboard_make_move(ChessBoard *board, Move move)
+int chessboard_make_move(ChessBoard *board, Move move)
 {
 	BitBoard origin_target = (MASK_SQUARE[move.origin] | MASK_SQUARE[move.target]);
 
@@ -120,6 +120,30 @@ void chessboard_make_move(ChessBoard *board, Move move)
 	}
 
 	board->current_color = !board->current_color;
+	board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
+	board->empty_squares = ~board->occupied_squares;
+	board->available_squares = ~board->pieces[board->current_color];
+
+	board->history.moves[board->history.size++] = move;
+}
+
+void chessboard_undo_move(ChessBoard *board)
+{
+	Move move = board->history.moves[--board->history.size];
+	board->current_color = !board->current_color;
+
+	BitBoard origin_target = (MASK_SQUARE[move.origin] | MASK_SQUARE[move.target]);
+
+	board->pieces[move.piece] ^= origin_target;
+	board->pieces[board->current_color] ^= origin_target;
+
+	// Makes sure it captured a piece
+	if (move.captured_piece != EMPTY)
+	{
+		board->pieces[move.captured_piece] ^= MASK_SQUARE[move.target];
+		board->pieces[!board->current_color] ^= MASK_SQUARE[move.target];
+	}
+
 	board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
 	board->empty_squares = ~board->occupied_squares;
 	board->available_squares = ~board->pieces[board->current_color];

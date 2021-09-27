@@ -28,13 +28,15 @@ typedef struct
 	int num_half_moves;
 
 	int current_color;
+
+	MoveHistory history;
 } ChessBoard;
 
 void chessboard_init(ChessBoard *board, char *fen_str);
 
 Piece chessboard_get_piece(ChessBoard *board, BitBoard index);
 
-void chessboard_make_move(ChessBoard *board, Move move);
+int chessboard_make_move(ChessBoard *board, Move move);
 
 void chessboard_undo_move(ChessBoard *board);
 
