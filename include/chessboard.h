@@ -9,7 +9,7 @@ typedef enum
 {
 	WHITE_KING_SIDE = 1,
 	WHITE_QUEEN_SIDE = 2,
-	BLACk_KING_SIDE = 4,
+	BLACK_KING_SIDE = 4,
 	BLACK_QUEEN_SIDE = 8,
 } CastlePermissions;
 
@@ -19,8 +19,8 @@ typedef struct
 
 	BitBoard occupied_squares;
 	BitBoard empty_squares;
-	BitBoard en_passent_target;
 	BitBoard available_squares;
+	BitBoard en_passent;
 
 	int castle_permission;
 
@@ -34,11 +34,11 @@ typedef struct
 
 void chessboard_init(ChessBoard *board, char *fen_str);
 
-Piece chessboard_get_piece(ChessBoard *board, BitBoard index);
+Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask);
 
 int chessboard_make_move(ChessBoard *board, Move move);
 
-void chessboard_undo_move(ChessBoard *board);
+void chessboard_undo_move(ChessBoard *board, int castling_permission, int en_passent_target);
 
 void chessboard_generate_moves(ChessBoard *board, MoveList *list);
 

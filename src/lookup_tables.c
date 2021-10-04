@@ -115,6 +115,14 @@ const BitBoard MASK_SQUARE[64] = {
 	0x8000000000000000,
 };
 
+const BitBoard MASK_F1_TO_G1 = 0x60;
+
+const BitBoard MASK_B1_TO_D1 = 0xe;
+
+const BitBoard MASK_F8_TO_G8 = 0x6000000000000000;
+
+const BitBoard MASK_B8_TO_D8 = 0xe00000000000000;
+
 /**
  * TODO: write description
  */

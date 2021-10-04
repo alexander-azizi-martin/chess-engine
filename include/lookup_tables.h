@@ -19,6 +19,14 @@ const BitBoard MASK_FILE[8];
 
 const BitBoard MASK_SQUARE[64];
 
+const BitBoard MASK_F1_TO_G1;
+
+const BitBoard MASK_B1_TO_D1;
+
+const BitBoard MASK_F8_TO_G8;
+
+const BitBoard MASK_B8_TO_D8;
+
 BitBoard MASK_PAWN_ATTACKS[2][64];
 
 BitBoard MASK_KNIGHT_ATTACKS[64];

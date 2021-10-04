@@ -22,4 +22,6 @@ BitBoard lookup_bishop_attacks(int square, BitBoard occupied_squares);
 
 BitBoard lookup_rook_attacks(int square, BitBoard occupied_squares); 
 
+BitBoard lookup_queen_attacks(int square, BitBoard occupied_squares);
+
 #endif

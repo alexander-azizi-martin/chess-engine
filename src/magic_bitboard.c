@@ -465,3 +465,8 @@ BitBoard lookup_rook_attacks(int square, BitBoard occupied_squares)
 
 	return MAGIC_ROOK_TABLE[square].attack_table[blocker_board];
 }
+
+BitBoard lookup_queen_attacks(int square, BitBoard occupied_squares) 
+{
+	return lookup_bishop_attacks(square, occupied_squares) | lookup_rook_attacks(square, occupied_squares);
+}
