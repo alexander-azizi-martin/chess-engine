@@ -41,32 +41,6 @@ int bitboard_pop(BitBoard *board)
 }
 
 /**
- * Used to iterate over the indexies of a bitboard. For the initial call, pass in the bitboard to iterate over, then 
- * pass NULL for all subsequent calls. Returns -1 when finished iterating.
- * 
- * Note: This function does not work recursively and only keeps track of a single bitboard at once
- * 
- * ex:
- * for(int i = bitboard_iter(board); i != -1; i = bitboard_iter(NULL)) {}
- */
-int bitboard_iter(BitBoard *board)
-{
-	static BitBoard saved_board;
-	saved_board = (board == NULL) ? saved_board : *board;
-
-	if (saved_board)
-	{
-		int index = bitboard_scan_forward(saved_board);
-
-		saved_board &= saved_board - 1;
-
-		return index;
-	}
-
-	return -1;
-}
-
-/**
  * Returns the number of non zero bits in the given bitboard.
  */
 int bitboard_count(BitBoard board)

@@ -5,13 +5,14 @@
 
 typedef enum
 {
-	KING_CASTLE = 1,
+	NORMAL_MOVE,
+	KING_CASTLE,
 	QUEEN_CASTLE,
 	ROOK_PROMOTION,
 	KNIGHT_PROMOTION,
 	BISHOP_PROMOTION,
 	QUEEN_PROMOTION,
-} MoveFlags;
+} MoveType;
 
 typedef struct 
 {
@@ -19,7 +20,7 @@ typedef struct
 	U8 target;
 	U8 piece : 4;
 	U8 captured_piece : 4;
-	U8 flag;
+	U8 move_type;
 } Move;
 
 typedef struct

@@ -143,7 +143,7 @@ int chessboard_make_move(ChessBoard *board, Move move)
 	int color_shift = (board->current_color == WHITE) ? 0 : (BLACK_PAWNS - WHITE_PAWNS); 
 
 	// Updates the new position of the piece
-	switch (move.flag)
+	switch (move.move_type)
 	{
 		case ROOK_PROMOTION:
 			board->pieces[WHITE_ROOKS + color_shift] ^= MASK_SQUARE[move.target];
@@ -253,7 +253,7 @@ void chessboard_undo_move(ChessBoard *board, int castle_permission, int en_passe
 	// Shift to change piece color from white to black
 	int color_shift = (board->current_color == WHITE) ? 0 : (BLACK_PAWNS - WHITE_PAWNS); 
 
-	switch (move.flag)
+	switch (move.move_type)
 	{
 		case ROOK_PROMOTION:
 			board->pieces[WHITE_ROOKS + color_shift] ^= MASK_SQUARE[move.target];
@@ -304,26 +304,48 @@ void chessboard_undo_move(ChessBoard *board, int castle_permission, int en_passe
 }
 
 /**
- * TODO: write description
+ * Appends each move in the move_mask to the given list.
  */
-static inline void append_moves_by_direction(ChessBoard *board, MoveList *list, BitBoard move_mask, int shift, int piece, int flag)
+static inline void append_moves(ChessBoard *board, MoveList *list, BitBoard *move_mask, int origin, int piece)
 {
-	int index;
-	while ((index = bitboard_pop(&move_mask)) != -1)
+	// Handles pawn promotions
+	BitBoard promotion_mask = 0;
+	if (piece == WHITE_PAWNS)
 	{
-		list->moves[list->size++] = (Move) {index - shift, index, piece, chessboard_get_piece(board, MASK_SQUARE[index]), flag};
+		promotion_mask = *move_mask & MASK_RANK[RANK_8];
+		*move_mask &= CLEAR_RANK[RANK_8];
 	}
-}
-
-/**
- * TODO: write description
- */
-static inline void append_moves_by_piece(ChessBoard *board, MoveList *list, BitBoard move_mask, int origin, int piece, int flag)
-{
-	int index;
-	while ((index = bitboard_pop(&move_mask)) != -1)
+	else if (piece == BLACK_PAWNS)
 	{
-		list->moves[list->size++] = (Move) {origin, index, piece, chessboard_get_piece(board, MASK_SQUARE[index]), flag};
+		promotion_mask = *move_mask & MASK_RANK[RANK_1];
+		*move_mask &= CLEAR_RANK[RANK_1];
+	}
+
+	int target;
+	while ((target = bitboard_pop(move_mask)) != -1)
+	{
+		int captured_piece = chessboard_get_piece(board, MASK_SQUARE[target]);
+
+		list->moves[list->size++] = (Move) {
+			origin, target, piece, captured_piece, NORMAL_MOVE
+		};
+	}
+	while ((target = bitboard_pop(&promotion_mask)) != -1)
+	{
+		int captured_piece = chessboard_get_piece(board, MASK_SQUARE[target]);
+
+		list->moves[list->size++] = (Move) {
+			origin, target, piece, captured_piece, ROOK_PROMOTION
+		};
+		list->moves[list->size++] = (Move) {
+			origin, target, piece, captured_piece, KNIGHT_PROMOTION
+		};
+		list->moves[list->size++] = (Move) {
+			origin, target, piece, captured_piece, BISHOP_PROMOTION
+		};
+		list->moves[list->size++] = (Move) {
+			origin, target, piece, captured_piece, QUEEN_PROMOTION
+		};
 	}
 }
 
@@ -333,74 +355,52 @@ static inline void append_moves_by_piece(ChessBoard *board, MoveList *list, BitB
 void chessboard_generate_moves(ChessBoard *board, MoveList *list)
 {
 	list->size = 0;
-	int pawns 	= (board->current_color == WHITE) ? WHITE_PAWNS 	: BLACK_PAWNS;
-	int rooks 	= (board->current_color == WHITE) ? WHITE_ROOKS 	: BLACK_ROOKS;
-	int king 	= (board->current_color == WHITE) ? WHITE_KING 		: BLACK_KING;
-	int queens 	= (board->current_color == WHITE) ? WHITE_QUEENS 	: BLACK_QUEENS;
-	int bishops = (board->current_color == WHITE) ? WHITE_BISHOPS 	: BLACK_BISHOPS;
-	int knights = (board->current_color == WHITE) ? WHITE_KNIGHTS 	: BLACK_KNIGHTS;
 
-	// Generates pawn pushes separately for white and black because their pawns move in opposite directions
-	if (pawns == WHITE_PAWNS)
+	int color_shift = (board->current_color == WHITE) ? 0 : 8;
+	for (int piece = WHITE_PAWNS + color_shift; piece <= WHITE_KING + color_shift; piece++)
 	{
-		BitBoard single_pawn_push = board->pieces[WHITE_PAWNS] << 8 & board->empty_squares;
-		append_moves_by_direction(board, list, single_pawn_push & CLEAR_RANK[RANK_8], 8, WHITE_PAWNS, 0);
+		BitBoard attack_mask, piece_mask = board->pieces[piece];
 
-		// Pawn promotions for each of the four possible pieces
-		BitBoard single_pawn_push_promotions = single_pawn_push & MASK_RANK[RANK_8];
-		append_moves_by_direction(board, list, single_pawn_push_promotions, 8, WHITE_PAWNS, QUEEN_PROMOTION);
-		append_moves_by_direction(board, list, single_pawn_push_promotions, 8, WHITE_PAWNS, ROOK_PROMOTION);
-		append_moves_by_direction(board, list, single_pawn_push_promotions, 8, WHITE_PAWNS, BISHOP_PROMOTION);
-		append_moves_by_direction(board, list, single_pawn_push_promotions, 8, WHITE_PAWNS, KNIGHT_PROMOTION);
+		int origin;
+		while((origin = bitboard_pop(&piece_mask)) != -1)
+		{
+			switch (piece)
+			{
+				case WHITE_PAWNS:
+					attack_mask = MASK_SQUARE[origin] << 8 & board->empty_squares;
+					attack_mask |= attack_mask << 8 & MASK_RANK[RANK_4] & board->empty_squares;
+					attack_mask |= MASK_PAWN_ATTACKS[WHITE][origin];
+					break;
+				case BLACK_PAWNS:
+					attack_mask = MASK_SQUARE[origin] >> 8 & board->empty_squares;
+					attack_mask |= attack_mask >> 8 & MASK_RANK[RANK_5] & board->empty_squares;
+					attack_mask |= MASK_PAWN_ATTACKS[BLACK][origin];
+					break;
+				case WHITE_ROOKS: case BLACK_ROOKS:
+					attack_mask = lookup_rook_attacks(origin, board->occupied_squares);
+					break;
+				case WHITE_BISHOPS: case BLACK_BISHOPS:
+					attack_mask = lookup_bishop_attacks(origin, board->occupied_squares);
+					break;
+				case WHITE_QUEENS: case BLACK_QUEENS:
+					attack_mask = lookup_queen_attacks(origin, board->occupied_squares);
+					break;
+				case WHITE_KNIGHTS: case BLACK_KNIGHTS:
+					attack_mask = MASK_KNIGHT_ATTACKS[origin];
+					break;
+				case WHITE_KING: case BLACK_KING:
+					attack_mask = MASK_KNIGHT_ATTACKS[origin];
+					break;
+			}
 
-		// Doesn't need promotions for double pawn push because a double push can't reach the back rank
-		BitBoard double_pawn_push = single_pawn_push << 8 & MASK_RANK[RANK_4] & board->empty_squares;
-		append_moves_by_direction(board, list, double_pawn_push, 16, WHITE_PAWNS, 0);
+			if (piece == WHITE_PAWNS || piece == BLACK_PAWNS)
+				attack_mask &= board->available_squares | board->en_passent;
+			else
+				attack_mask &= board->available_squares;
+
+			append_moves(board, list, &attack_mask, origin, piece);
+		}
 	}
-	else 
-	{
-		BitBoard single_pawn_push = board->pieces[BLACK_PAWNS] >> 8 & board->empty_squares;
-		append_moves_by_direction(board, list, single_pawn_push & CLEAR_RANK[RANK_8], -8, BLACK_PAWNS, 0);
-
-		// Pawn promotions for each of the four possible pieces
-		BitBoard single_pawn_push_promotions = single_pawn_push & MASK_RANK[RANK_8];
-		append_moves_by_direction(board, list, single_pawn_push_promotions, -8, BLACK_PAWNS, QUEEN_PROMOTION);
-		append_moves_by_direction(board, list, single_pawn_push_promotions, -8, BLACK_PAWNS, ROOK_PROMOTION);
-		append_moves_by_direction(board, list, single_pawn_push_promotions, -8, BLACK_PAWNS, BISHOP_PROMOTION);
-		append_moves_by_direction(board, list, single_pawn_push_promotions, -8, BLACK_PAWNS, KNIGHT_PROMOTION);
-
-		// Doesn't need promotions for double pawn push because a double push can't reach the back rank
-		BitBoard double_pawn_push = single_pawn_push >> 8 & MASK_RANK[RANK_5] & board->empty_squares;
-		append_moves_by_direction(board, list, double_pawn_push, -16, BLACK_PAWNS, 0);
-	}
-
-	// Generates pawn attacks using precalculated lookup table
-	BitBoard pawn_attacks, pawn_attack_promotions;
-	for (int index = bitboard_iter(&board->pieces[pawns]); index != -1; index = bitboard_iter(NULL))
-	{
-		pawn_attacks = MASK_PAWN_ATTACKS[board->current_color][index] & (board->pieces[!board->current_color] | board->en_passent);
-		append_moves_by_piece(board, list, pawn_attacks & CLEAR_RANK[RANK_8], index, pawns, 0);
-
-		// Pawn promotions for each of the four possible pieces
-		pawn_attack_promotions = pawn_attacks & MASK_RANK[RANK_8];
-		append_moves_by_piece(board, list, pawn_attack_promotions, index, pawns, QUEEN_PROMOTION);
-		append_moves_by_piece(board, list, pawn_attack_promotions, index, pawns, ROOK_PROMOTION);
-		append_moves_by_piece(board, list, pawn_attack_promotions, index, pawns, BISHOP_PROMOTION);
-		append_moves_by_piece(board, list, pawn_attack_promotions, index, pawns, KNIGHT_PROMOTION);
-	}
-
-	// Generates knight attacks using precalculated lookup table
-	BitBoard knight_attacks;
-	for (int index = bitboard_iter(&board->pieces[knights]); index != -1; index = bitboard_iter(NULL))
-	{
-		knight_attacks = MASK_KNIGHT_ATTACKS[index] & board->available_squares;
-		append_moves_by_piece(board, list, knight_attacks, index, knights, 0);
-	}
-
-	// Doesn't need loop to generate moves because their is only 1 king
-	int king_index = bitboard_scan_forward(board->pieces[king]);
-	BitBoard king_attacks = MASK_KING_ATTACKS[king_index] & board->available_squares;
-	append_moves_by_piece(board, list, king_attacks, king_index, king, 0);
 
 	// Generates castling moves
 	if (board->current_color == WHITE)
@@ -450,30 +450,6 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
 			if (path_clear && !passes_through_check)
 				list->moves[list->size++] = (Move) {60, 58, BLACK_KING, EMPTY, KING_CASTLE};
 		}
-	}
-	
-	// Queen moves are the combination of rook and bishops moves on the queen's square
-	BitBoard queen_attacks;
-	for (int index = bitboard_iter(&board->pieces[queens]); index != -1; index = bitboard_iter(NULL))
-	{
-		queen_attacks = lookup_queen_attacks(index, board->occupied_squares) & board->available_squares;
-		append_moves_by_piece(board, list, queen_attacks, index, queens, 0);
-	}
-
-	// Generates bishop attacks using magic bitboards
-	BitBoard bishop_attacks;
-	for (int index = bitboard_iter(&board->pieces[bishops]); index != -1; index = bitboard_iter(NULL))
-	{
-		bishop_attacks = lookup_bishop_attacks(index, board->occupied_squares) & board->available_squares;
-		append_moves_by_piece(board, list, bishop_attacks, index, bishops, 0);
-	}
-
-	// Generates rook attacks using magic bitboards
-	BitBoard rook_attacks;
-	for (int index = bitboard_iter(&board->pieces[rooks]); index != -1; index = bitboard_iter(NULL))
-	{
-		rook_attacks = lookup_rook_attacks(index, board->occupied_squares) & board->available_squares;
-		append_moves_by_piece(board, list, rook_attacks, index, rooks, 0);
 	}
 }
 
