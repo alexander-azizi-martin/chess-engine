@@ -15,6 +15,13 @@ typedef enum
 
 typedef struct
 {
+	Move move;
+	U8 en_passent_target;
+	U8 castle_permission;
+} MoveInfo;
+
+typedef struct
+{
 	BitBoard pieces[14];
 
 	BitBoard occupied_squares;
@@ -29,7 +36,8 @@ typedef struct
 
 	int current_color;
 
-	MoveHistory history;
+	MoveInfo move_history[2048];
+	int num_moves;
 } ChessBoard;
 
 void chessboard_init(ChessBoard *board, char *fen_str);
@@ -38,7 +46,7 @@ Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask);
 
 int chessboard_make_move(ChessBoard *board, Move move);
 
-void chessboard_undo_move(ChessBoard *board, int castling_permission, int en_passent_target);
+void chessboard_undo_move(ChessBoard *board);
 
 void chessboard_generate_moves(ChessBoard *board, MoveList *list);
 
