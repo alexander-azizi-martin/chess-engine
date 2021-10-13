@@ -1,6 +1,7 @@
 #ifndef CHESS_BOARD_H
 #define CHESS_BOARD_H
 
+#include <stdbool.h>
 #include "defs.h"
 #include "bitboard.h"
 #include "move.h"
@@ -44,7 +45,9 @@ void chessboard_init(ChessBoard *board, char *fen_str);
 
 Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask);
 
-int chessboard_make_move(ChessBoard *board, Move move);
+bool chessboard_squared_attacked(ChessBoard *board, int target);
+
+bool chessboard_make_move(ChessBoard *board, Move move);
 
 void chessboard_undo_move(ChessBoard *board);
 
@@ -54,6 +57,6 @@ void chessboard_print(ChessBoard *board);
 
 Piece fen_to_piece(char f);
 
-char piece_to_fen(Piece p);
+char* piece_to_fen(Piece p);
 
 #endif

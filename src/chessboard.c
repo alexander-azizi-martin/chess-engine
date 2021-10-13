@@ -129,7 +129,7 @@ bool chessboard_squared_attacked(ChessBoard *board, int target)
 /**
  * TODO: write description
  */
-int chessboard_make_move(ChessBoard *board, Move move)
+bool chessboard_make_move(ChessBoard *board, Move move)
 {
     board->move_history[board->num_moves].move = move;
     board->move_history[board->num_moves].castle_permission = board->castle_permission;
@@ -172,7 +172,7 @@ int chessboard_make_move(ChessBoard *board, Move move)
     }
 
     board->pieces[move.piece] ^= MASK_SQUARE[move.origin];
-    board->pieces[board->current_color] ^= MASK_SQUARE[move.target];
+    board->pieces[board->current_color] ^= MASK_SQUARE[move.origin] | MASK_SQUARE[move.target];
     
     if (move.captured_piece != EMPTY)
     {
@@ -189,7 +189,7 @@ int chessboard_make_move(ChessBoard *board, Move move)
     if (chessboard_squared_attacked(board, bitboard_scan_forward(board->pieces[WHITE_KING + color_shift])))
     {
         chessboard_undo_move(board);
-        return -1;
+        return false;
     }
 
     board->current_color = !board->current_color;
@@ -231,7 +231,7 @@ int chessboard_make_move(ChessBoard *board, Move move)
             break;
     }
 
-    return 1;
+    return true;
 }
 
 void chessboard_undo_move(ChessBoard *board)
@@ -260,7 +260,7 @@ void chessboard_undo_move(ChessBoard *board)
         case KING_CASTLE:
             board->pieces[move.piece] ^= MASK_SQUARE[move.target];
             board->pieces[WHITE_ROOKS + color_shift] ^= MASK_SQUARE[move.target + 1] | MASK_SQUARE[move.target - 1];
-            board->pieces[board->current_color] ^= MASK_SQUARE[move.target - 2] | MASK_SQUARE[move.target + 1];
+            board->pieces[board->current_color] ^= MASK_SQUARE[move.target + 1] | MASK_SQUARE[move.target - 1];
             break;
         case QUEEN_CASTLE:
             board->pieces[move.piece] ^= MASK_SQUARE[move.target];
@@ -273,7 +273,7 @@ void chessboard_undo_move(ChessBoard *board)
     }
 
     board->pieces[move.piece] ^= MASK_SQUARE[move.origin];
-    board->pieces[board->current_color] ^= MASK_SQUARE[move.target];
+    board->pieces[board->current_color] ^= MASK_SQUARE[move.origin] | MASK_SQUARE[move.target];
     
     if (move.captured_piece != EMPTY)
     {
@@ -387,6 +387,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
             }
 
             attack_mask &= board->available_squares;
+
             append_moves(board, list, &attack_mask, origin, piece);
         }
     }
@@ -394,7 +395,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
     // Generates castling moves
     if (board->current_color == WHITE)
     {
-        if (board->castle_permission | WHITE_KING_SIDE)
+        if (board->castle_permission & WHITE_KING_SIDE)
         {	
             bool passes_through_check = chessboard_squared_attacked(board, 4) 
                 || chessboard_squared_attacked(board, 5) 
@@ -405,7 +406,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
                 list->moves[list->size++] = (Move) {4, 6, WHITE_KING, EMPTY, KING_CASTLE};
         }
 
-        if (board->castle_permission | WHITE_QUEEN_SIDE)
+        if (board->castle_permission & WHITE_QUEEN_SIDE)
         {
             bool passes_through_check = chessboard_squared_attacked(board, 4) 
                 || chessboard_squared_attacked(board, 3) 
@@ -418,7 +419,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
     }
     else
     {
-        if (board->castle_permission | BLACK_KING_SIDE)
+        if (board->castle_permission & BLACK_KING_SIDE)
         {
             bool passes_through_check = chessboard_squared_attacked(board, 60) 
                 || chessboard_squared_attacked(board, 61) 
@@ -429,7 +430,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
                 list->moves[list->size++] = (Move) {60, 62, BLACK_KING, EMPTY, KING_CASTLE};
         }
 
-        if (board->castle_permission | BLACK_QUEEN_SIDE)
+        if (board->castle_permission & BLACK_QUEEN_SIDE)
         {
             bool passes_through_check = chessboard_squared_attacked(board, 60) 
                 || chessboard_squared_attacked(board, 59) 
@@ -452,7 +453,8 @@ void chessboard_print(ChessBoard *board)
         printf("%i |", rank + 1);
         for (int file = FILE_A; file <= FILE_H; file++)
         {
-            printf(" %c", piece_to_fen(chessboard_get_piece(board, FileRankToSquare(file, rank))));
+            printf(" ");
+            printf(piece_to_fen(chessboard_get_piece(board, FileRankToSquare(file, rank))));
         }
         printf("\n");
     }
@@ -494,35 +496,35 @@ Piece fen_to_piece(char f)
     }
 }
 
-char piece_to_fen(Piece p)
+char* piece_to_fen(Piece p)
 {
     switch (p) 
     {
         case WHITE_PAWNS:
-            return 'P';
+            return "P";
         case WHITE_ROOKS:
-            return 'R';
+            return "R";
         case WHITE_KNIGHTS:
-            return 'N';
+            return "N";
         case WHITE_BISHOPS:
-            return 'B';
+            return "B";
         case WHITE_QUEENS:
-            return 'Q';
+            return "Q";
         case WHITE_KING:
-            return 'K';
+            return "K";
         case BLACK_PAWNS:
-            return 'p';
+            return "p";
         case BLACK_ROOKS:
-            return 'r';
+            return "r";
         case BLACK_KNIGHTS:
-            return 'n';
+            return "n";
         case BLACK_BISHOPS:
-            return 'b';
+            return "b";
         case BLACK_QUEENS:
-            return 'q';
+            return "q";
         case BLACK_KING:
-            return 'k';
+            return "k";
         default:
-            return '.';
+            return ".";
     }
 }

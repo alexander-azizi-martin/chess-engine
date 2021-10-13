@@ -176,7 +176,7 @@ static BitBoard generate_king_attack_mask(int square)
     BitBoard attacks = 0;
 
     attacks |= (MASK_SQUARE[square] << 1) & CLEAR_FILE[FILE_A];
-    attacks |= (MASK_SQUARE[square] << 1) & CLEAR_FILE[FILE_H];
+    attacks |= (MASK_SQUARE[square] >> 1) & CLEAR_FILE[FILE_H];
     attacks |= ((MASK_SQUARE[square] | attacks) << 8) | ((MASK_SQUARE[square] | attacks) >> 8);
 
     return attacks;
