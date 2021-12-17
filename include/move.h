@@ -6,6 +6,7 @@
 typedef enum
 {
     NORMAL_MOVE,
+    EN_PASSENT,
     KING_CASTLE,
     QUEEN_CASTLE,
     ROOK_PROMOTION,
