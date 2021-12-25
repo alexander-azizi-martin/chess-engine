@@ -33,6 +33,9 @@ BitBoard MASK_KNIGHT_ATTACKS[64];
 
 BitBoard MASK_KING_ATTACKS[64];
 
+/**
+ * Initializes the attack lookup tables with pre-calculated attack masks.
+ **/
 void lookup_tables_init();
 
 #endif

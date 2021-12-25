@@ -10,8 +10,8 @@
 #include "console.h"
 
 /**
- * Initializes a chessboard's position with a fen stirng.
- */
+ * Initializes a chessboard's pieces with a fen stirng.
+ **/
 void chessboard_init(ChessBoard *board, char *fen_str)
 {
     // Clears board
@@ -84,12 +84,11 @@ void chessboard_init(ChessBoard *board, char *fen_str)
 
     board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
     board->empty_squares = ~board->occupied_squares;
-    board->available_squares = ~board->pieces[board->current_color];
 }
 
 /**
  * Returns the piece on the given square.
- */
+ **/
 Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask) 
 {
     if (board->empty_squares & square_mask)
@@ -106,13 +105,15 @@ Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask)
 }
 
 /**
- * Returns a bitboard containing the squares attacked by any opponent pieces.
- */
+ * Returns whether the given square is being attacked by an opponent
+ * piece.
+ **/
 bool chessboard_squared_attacked(ChessBoard *board, int target)
 {
     // Shift to change piece color from white to black
     int color_shift = (board->current_color == WHITE) ? 0 : (BLACK_PAWNS - WHITE_PAWNS); 
 
+    // Checks if an opponent pawn, knight, king, bishop, rook, or queen can attack the given square
     if (MASK_PAWN_ATTACKS[board->current_color][target] & board->pieces[BLACK_PAWNS - color_shift])
         return true;
     if (MASK_KNIGHT_ATTACKS[target] & board->pieces[BLACK_KNIGHTS - color_shift])
@@ -128,17 +129,10 @@ bool chessboard_squared_attacked(ChessBoard *board, int target)
 }
 
 /**
- * TODO: write description
- */
-bool chessboard_make_move(ChessBoard *board, Move move)
+ * Updates the chessboard's pieces after a piece is moved.
+ **/
+void chessboard_move_piece(ChessBoard *board, Move move)
 {
-    board->move_history[board->num_moves].move = move;
-    board->move_history[board->num_moves].castle_permission = board->castle_permission;
-    board->move_history[board->num_moves].en_passent_target = (board->en_passent) 
-        ? bitboard_scan_forward(board->en_passent) 
-        : -1;
-    board->num_moves++;
-
     // Shift to change piece color from white to black
     int color_shift = (board->current_color == WHITE) ? 0 : (BLACK_PAWNS - WHITE_PAWNS); 
 
@@ -179,9 +173,6 @@ bool chessboard_make_move(ChessBoard *board, Move move)
 
     board->pieces[move.piece] ^= MASK_SQUARE[move.origin];
     board->pieces[board->current_color] ^= MASK_SQUARE[move.origin] | MASK_SQUARE[move.target];
-    board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
-    board->empty_squares = ~board->occupied_squares;
-    board->available_squares = ~board->pieces[!board->current_color];
     
     if (move.captured_piece != EMPTY && move.move_type != EN_PASSENT)
     {
@@ -189,10 +180,29 @@ bool chessboard_make_move(ChessBoard *board, Move move)
         board->pieces[!board->current_color] ^= MASK_SQUARE[move.target];
     }
 
-    board->en_passent = 0;
     board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
     board->empty_squares = ~board->occupied_squares;
-    board->available_squares = ~board->pieces[!board->current_color];
+}
+
+
+/**
+ * Updates the chessboard's pieces after the given pseudo legal move is played. 
+ * Returns whether the move is legal. If the move is not legal the board is not
+ * updated.
+ **/
+bool chessboard_make_move(ChessBoard *board, Move move)
+{
+    board->move_history[board->num_moves].move = move;
+    board->move_history[board->num_moves].castle_permission = board->castle_permission;
+    board->move_history[board->num_moves].en_passent_target = (board->en_passent) 
+        ? bitboard_scan_forward(board->en_passent) 
+        : -1;
+    board->num_moves++;
+
+    // Shift to change piece color from white to black
+    int color_shift = (board->current_color == WHITE) ? 0 : (BLACK_PAWNS - WHITE_PAWNS); 
+
+    chessboard_move_piece(board, move);
 
     // Invalid move if king is being attacked
     if (chessboard_squared_attacked(board, bitboard_scan_forward(board->pieces[WHITE_KING + color_shift])))
@@ -201,34 +211,31 @@ bool chessboard_make_move(ChessBoard *board, Move move)
         return false;
     }
 
+    board->en_passent = 0;
     board->current_color = !board->current_color;
 
     // Updates castling permissions and en passent square
     switch (move.piece)
     {
         case WHITE_ROOKS: 
-            if ((move.origin == 0 || move.target == 0) && board->castle_permission & WHITE_QUEEN_SIDE)
-                board->castle_permission ^= WHITE_QUEEN_SIDE;
-            else if ((move.origin == 7 || move.target == 7) && board->castle_permission & WHITE_KING_SIDE)
-                board->castle_permission ^= WHITE_KING_SIDE;
+            if (move.origin == A1 || move.target == A1)
+                board->castle_permission &= ~WHITE_QUEEN_SIDE;
+            else if (move.origin == H1 || move.target == H1)
+                board->castle_permission &= ~WHITE_KING_SIDE;
             break;
         case BLACK_ROOKS:
-            if ((move.origin == 56 || move.target == 56) && board->castle_permission & BLACK_QUEEN_SIDE)
-                board->castle_permission ^= BLACK_QUEEN_SIDE;
-            else if ((move.origin == 63 || move.target == 63) && board->castle_permission & BLACK_KING_SIDE)
-                board->castle_permission ^= BLACK_KING_SIDE;
+            if (move.origin == A8 || move.target == A8)
+                board->castle_permission &= ~BLACK_QUEEN_SIDE;
+            else if (move.origin == H8 || move.target == H8)
+                board->castle_permission &= ~BLACK_KING_SIDE;
             break;
         case WHITE_KING:
-            if (board->castle_permission & WHITE_KING_SIDE)
-                board->castle_permission ^= WHITE_KING_SIDE;
-            if (board->castle_permission & WHITE_QUEEN_SIDE)
-                board->castle_permission ^= WHITE_QUEEN_SIDE;
+            board->castle_permission &= ~WHITE_KING_SIDE;
+            board->castle_permission &= ~WHITE_QUEEN_SIDE;
             break;
         case BLACK_KING:
-            if (board->castle_permission & BLACK_KING_SIDE)
-                board->castle_permission ^= BLACK_KING_SIDE;
-            if (board->castle_permission & BLACK_QUEEN_SIDE)
-                board->castle_permission ^= BLACK_QUEEN_SIDE;
+            board->castle_permission &= ~BLACK_KING_SIDE;
+            board->castle_permission &= ~BLACK_QUEEN_SIDE;
             break;
         case WHITE_PAWNS:
             if (move.target - move.origin == 16)
@@ -240,81 +247,37 @@ bool chessboard_make_move(ChessBoard *board, Move move)
             break;
     }
     
-    // Removes castling rights if one of the rooks get captured
+    // Removes castling rights if one of the rooks gets captured
     switch (move.captured_piece)
     {
         case WHITE_ROOKS: 
-            if (move.target == 0 && board->castle_permission & WHITE_QUEEN_SIDE)
-                board->castle_permission ^= WHITE_QUEEN_SIDE;
-            else if (move.target == 7 && board->castle_permission & WHITE_KING_SIDE)
-                board->castle_permission ^= WHITE_KING_SIDE;
+            if (move.target == A1)
+                board->castle_permission &= ~WHITE_QUEEN_SIDE;
+            else if (move.target == H1)
+                board->castle_permission &= ~WHITE_KING_SIDE;
             break;
         case BLACK_ROOKS:
-            if (move.target == 56 && board->castle_permission & BLACK_QUEEN_SIDE)
-                board->castle_permission ^= BLACK_QUEEN_SIDE;
-            else if (move.target == 63 && board->castle_permission & BLACK_KING_SIDE)
-                board->castle_permission ^= BLACK_KING_SIDE;
+            if (move.target == A8)
+                board->castle_permission &= ~BLACK_QUEEN_SIDE;
+            else if (move.target == H8)
+                board->castle_permission &= ~BLACK_KING_SIDE;
             break;
     }
 
     return true;
 }
 
+/**
+ * Updates the chessboard's pieces after undoing the last moved played.
+ **/
 void chessboard_undo_move(ChessBoard *board)
 {
     board->num_moves--;
     Move move = board->move_history[board->num_moves].move;
     board->current_color = PieceColor(move.piece);
 
-    // Shift to change piece color from white to black
-    int color_shift = (board->current_color == WHITE) ? 0 : (BLACK_PAWNS - WHITE_PAWNS); 
+    chessboard_move_piece(board, move);
 
-    switch (move.move_type)
-    {
-        case ROOK_PROMOTION:
-            board->pieces[WHITE_ROOKS + color_shift] ^= MASK_SQUARE[move.target];
-            break;
-        case KNIGHT_PROMOTION:
-            board->pieces[WHITE_KNIGHTS + color_shift] ^= MASK_SQUARE[move.target];
-            break;
-        case BISHOP_PROMOTION:
-            board->pieces[WHITE_BISHOPS + color_shift] ^= MASK_SQUARE[move.target];
-            break;
-        case QUEEN_PROMOTION:
-            board->pieces[WHITE_QUEENS + color_shift] ^= MASK_SQUARE[move.target];
-            break;
-        case KING_CASTLE:
-            board->pieces[move.piece] ^= MASK_SQUARE[move.target];
-            board->pieces[WHITE_ROOKS + color_shift] ^= MASK_SQUARE[move.target + 1] | MASK_SQUARE[move.target - 1];
-            board->pieces[board->current_color] ^= MASK_SQUARE[move.target + 1] | MASK_SQUARE[move.target - 1];
-            break;
-        case QUEEN_CASTLE:
-            board->pieces[move.piece] ^= MASK_SQUARE[move.target];
-            board->pieces[WHITE_ROOKS + color_shift] ^= MASK_SQUARE[move.target - 2] | MASK_SQUARE[move.target + 1];
-            board->pieces[board->current_color] ^= MASK_SQUARE[move.target - 2] | MASK_SQUARE[move.target + 1];
-            break;
-        case EN_PASSENT:
-            board->pieces[move.piece] ^= MASK_SQUARE[move.target];
-            board->pieces[move.captured_piece] ^= MASK_SQUARE[move.target + 8 * ((board->current_color == WHITE) ? -1 : 1)];
-            board->pieces[!board->current_color] ^= MASK_SQUARE[move.target + 8 * ((board->current_color == WHITE) ? -1 : 1)];
-            break;
-        default:
-            board->pieces[move.piece] ^= MASK_SQUARE[move.target];
-            break;
-    }
-
-    board->pieces[move.piece] ^= MASK_SQUARE[move.origin];
-    board->pieces[board->current_color] ^= MASK_SQUARE[move.origin] | MASK_SQUARE[move.target];
-
-    if (move.captured_piece != EMPTY && move.move_type != EN_PASSENT)
-    {
-        board->pieces[move.captured_piece] ^= MASK_SQUARE[move.target];
-        board->pieces[!board->current_color] ^= MASK_SQUARE[move.target];
-    }
-
-    board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
-    board->empty_squares = ~board->occupied_squares;
-    board->available_squares = ~board->pieces[board->current_color];
     board->castle_permission = board->move_history[board->num_moves].castle_permission;
     board->en_passent = (board->move_history[board->num_moves].en_passent_target == -1) 
         ? 0
@@ -322,9 +285,9 @@ void chessboard_undo_move(ChessBoard *board)
 }
 
 /**
- * Appends each move in the move_mask to the given list.
- */
-static inline void append_moves(ChessBoard *board, MoveList *list, BitBoard *move_mask, int origin, int piece)
+ * Appends each move in the move_mask to the given MoveList.
+ **/
+static void append_moves(ChessBoard *board, MoveList *list, BitBoard *move_mask, int origin, int piece)
 {
     // Handles pawn promotions
     BitBoard promotion_mask = 0, en_passent_mask = 0;
@@ -382,8 +345,9 @@ static inline void append_moves(ChessBoard *board, MoveList *list, BitBoard *mov
 }
 
 /**
- * Generates all possible moves in a given possition and adds them to the movelist provided.
- */
+ * Generates all possible pseudo legal moves in a given possition 
+ * and adds them to the given MoveList.
+ **/
 void chessboard_generate_moves(ChessBoard *board, MoveList *list)
 {
     list->size = 0;
@@ -438,7 +402,7 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
                     break;
             }
 
-            attack_mask &= board->available_squares;
+            attack_mask &= ~board->pieces[board->current_color];
 
             append_moves(board, list, &attack_mask, origin, piece);
         }
@@ -450,25 +414,25 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
         // White castle king side
         if (board->castle_permission & WHITE_KING_SIDE)
         {	
-            bool passes_through_check = chessboard_squared_attacked(board, 4) 
-                || chessboard_squared_attacked(board, 5) 
-                || chessboard_squared_attacked(board, 6);
-            bool path_clear = (board->empty_squares & MASK_F1_TO_G1) == MASK_F1_TO_G1;
+            bool passes_through_check = chessboard_squared_attacked(board, E1) 
+                || chessboard_squared_attacked(board, F1) 
+                || chessboard_squared_attacked(board, G1);
+            bool path_clear = !(board->occupied_squares & MASK_F1_TO_G1);
 
             if (path_clear && !passes_through_check)
-                list->moves[list->size++] = (Move) {4, 6, WHITE_KING, EMPTY, KING_CASTLE};
+                list->moves[list->size++] = (Move) {E1, G1, WHITE_KING, EMPTY, KING_CASTLE};
         }
 
         // White castle queen side
         if (board->castle_permission & WHITE_QUEEN_SIDE)
         {
-            bool passes_through_check = chessboard_squared_attacked(board, 4) 
-                || chessboard_squared_attacked(board, 3) 
-                || chessboard_squared_attacked(board, 2);
-            bool path_clear = (board->empty_squares & MASK_B1_TO_D1) == MASK_B1_TO_D1;
+            bool passes_through_check = chessboard_squared_attacked(board, E1) 
+                || chessboard_squared_attacked(board, D1) 
+                || chessboard_squared_attacked(board, C1);
+            bool path_clear = !(board->occupied_squares & MASK_B1_TO_D1);
 
             if (path_clear && !passes_through_check)
-                list->moves[list->size++] = (Move) {4, 2, WHITE_KING, EMPTY, QUEEN_CASTLE};
+                list->moves[list->size++] = (Move) {E1, C1, WHITE_KING, EMPTY, QUEEN_CASTLE};
         }
     }
     else
@@ -476,32 +440,32 @@ void chessboard_generate_moves(ChessBoard *board, MoveList *list)
         // Black castle king side
         if (board->castle_permission & BLACK_KING_SIDE)
         {
-            bool passes_through_check = chessboard_squared_attacked(board, 60) 
-                || chessboard_squared_attacked(board, 61) 
-                || chessboard_squared_attacked(board, 62); 
-            bool path_clear = (board->empty_squares & MASK_F8_TO_G8) == MASK_F8_TO_G8;
+            bool passes_through_check = chessboard_squared_attacked(board, E8) 
+                || chessboard_squared_attacked(board, F8) 
+                || chessboard_squared_attacked(board, G8); 
+            bool path_clear = !(board->occupied_squares & MASK_F8_TO_G8);
 
             if (path_clear && !passes_through_check)
-                list->moves[list->size++] = (Move) {60, 62, BLACK_KING, EMPTY, KING_CASTLE};
+                list->moves[list->size++] = (Move) {E8, G8, BLACK_KING, EMPTY, KING_CASTLE};
         }
 
         // Black castle queen side
         if (board->castle_permission & BLACK_QUEEN_SIDE)
         {
-            bool passes_through_check = chessboard_squared_attacked(board, 60) 
-                || chessboard_squared_attacked(board, 59) 
-                || chessboard_squared_attacked(board, 58);
-            bool path_clear = (board->empty_squares & MASK_B8_TO_D8) == MASK_B8_TO_D8; 
+            bool passes_through_check = chessboard_squared_attacked(board, E8) 
+                || chessboard_squared_attacked(board, D8) 
+                || chessboard_squared_attacked(board, C8);
+            bool path_clear = !(board->occupied_squares & MASK_B8_TO_D8); 
 
             if (path_clear && !passes_through_check)
-                list->moves[list->size++] = (Move) {60, 58, BLACK_KING, EMPTY, QUEEN_CASTLE};
+                list->moves[list->size++] = (Move) {E8, C8, BLACK_KING, EMPTY, QUEEN_CASTLE};
         }
     }
 }
 
 /**
  * Prints a formated representation of a chessboard.
- */
+ **/
 void chessboard_print(ChessBoard *board)
 {
     for (int rank = RANK_8; rank >= RANK_1; rank--)

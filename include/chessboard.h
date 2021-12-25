@@ -41,18 +41,48 @@ typedef struct
     int num_moves;
 } ChessBoard;
 
+/**
+ * Initializes a chessboard's pieces with a fen stirng.
+ **/
 void chessboard_init(ChessBoard *board, char *fen_str);
 
+/**
+ * Returns the piece on the given square.
+ **/
 Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask);
 
+/**
+ * Returns whether the given square is being attacked by an opponent
+ * piece.
+ **/
 bool chessboard_squared_attacked(ChessBoard *board, int target);
 
+/**
+ * Updates the chessboard's pieces after a piece is moved.
+ **/
+void chessboard_move_piece(ChessBoard *board, Move move);
+
+/**
+ * Updates the chessboard's pieces after the given pseudo legal move is played. 
+ * Returns whether the move is legal. If the move is not legal the board is not
+ * updated.
+ **/
 bool chessboard_make_move(ChessBoard *board, Move move);
 
+/**
+ * Updates the chessboard's pieces after undoing the last moved played.
+ **/
 void chessboard_undo_move(ChessBoard *board);
 
+/**
+ * Generates all possible pseudo legal moves in a given possition 
+ * and adds them to the given MoveList.
+ **/
 void chessboard_generate_moves(ChessBoard *board, MoveList *list);
 
+/**
+ * Prints a formated representation of a chessboard.
+ **/
 void chessboard_print(ChessBoard *board);
 
 Piece fen_to_piece(char f);

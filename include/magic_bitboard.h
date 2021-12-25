@@ -16,12 +16,27 @@ MagicInfo MAGIC_BISHOP_TABLE[64];
 BitBoard MASK_ROOK_ATTACKS[102400];
 BitBoard MASK_BISHOP_ATTACKS[5248];
 
+/**
+ * Initializes the magic bitboard lookup tables. 
+ **/
 void magic_bitboards_init();
 
+/**
+ * Returns the attacks for a bishop on the given square by indexing
+ * the pre-calculated lookup table.
+ **/
 BitBoard lookup_bishop_attacks(int square, BitBoard occupied_squares); 
 
+/**
+ * Returns the attacks for a rook on the given square by indexing
+ * the pre-calculated lookup table.
+ **/
 BitBoard lookup_rook_attacks(int square, BitBoard occupied_squares); 
 
+/**
+ * Returns the attacks for a queen on the given square by indexing
+ * the pre-calculated lookup table for rooks and bishops.
+ **/
 BitBoard lookup_queen_attacks(int square, BitBoard occupied_squares);
 
 #endif

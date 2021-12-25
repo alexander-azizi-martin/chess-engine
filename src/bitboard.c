@@ -4,10 +4,10 @@
 #include "bitboard.h"
 #include "lookup_tables.h"
 
-/**
- * Returns the index of the LSB in the given board.
- */
-inline int bitboard_scan_forward(BitBoard board) 
+/** 
+ * Returns the index (0-63) of the LSB in the given BitBoard.  
+ **/
+int bitboard_scan_forward(BitBoard board) 
 {
     static const int bit_scan_forward_index[64] = {
         0, 47,  1, 56, 48, 27,  2, 60,
@@ -24,8 +24,10 @@ inline int bitboard_scan_forward(BitBoard board)
 }
 
 /**
- * Returns the index of the LSB and sets it to 0 or -1 no bits are set.
- */
+ * Returns the index of the LSB from the given bitboard and 
+ * sets it to 0. Returns -1 if the BitBoard does not have 
+ * any non-zero bits
+ **/
 int bitboard_pop(BitBoard *board)
 {
     if (*board)
@@ -41,8 +43,8 @@ int bitboard_pop(BitBoard *board)
 }
 
 /**
- * Returns the number of non zero bits in the given bitboard.
- */
+ * Returns the number of non-zero bits in the given BitBoard.
+ **/
 int bitboard_count(BitBoard board)
 {
     int count;
@@ -54,8 +56,8 @@ int bitboard_count(BitBoard board)
 }
 
 /**
- * Prints a formated representation of the given bitboard.
- */
+ * Prints the given BitBoard as a chess board.
+ **/
 void bitboard_print(BitBoard board)
 {
     for (int rank = RANK_8; rank >= RANK_1; rank--)

@@ -20,12 +20,26 @@ Representation of a chess bitboard:
 
 typedef U64 BitBoard;
 
+/** 
+ * Returns the index (0-63) of the LSB in the given BitBoard.  
+ **/
 int bitboard_scan_forward(BitBoard board);
 
+/**
+ * Returns the index of the LSB from the given bitboard and 
+ * sets it to 0. Returns -1 if the BitBoard does not have 
+ * any non-zero bits
+ **/
 int bitboard_pop(BitBoard *board);
 
+/**
+ * Returns the number of non-zero bits in the given BitBoard.
+ **/
 int bitboard_count(BitBoard board);
 
+/**
+ * Prints the given BitBoard as a chess board.
+ **/
 void bitboard_print(BitBoard board);
 
 #endif

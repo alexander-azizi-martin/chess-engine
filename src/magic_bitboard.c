@@ -177,8 +177,8 @@ static U64 ROOK_MAGIC_NUMBERS[64] = {
 };
 
 /**
- * TODO: write description
- */
+ * Returns the the the ith combination of the given blocker_mask.
+ **/
 static BitBoard generate_blocker_board(int index, BitBoard blocker_mask)
 {
     BitBoard blocker_board = 0ULL;
@@ -197,7 +197,7 @@ static BitBoard generate_blocker_board(int index, BitBoard blocker_mask)
 /**
  * Returns a mask containing all the squares that can block a bishop on 
  * the given square.
- */
+ **/
 static BitBoard generate_bishop_blocker_mask(int square)
 {
     int square_rank = square / 8;
@@ -225,7 +225,7 @@ static BitBoard generate_bishop_blocker_mask(int square)
 /**
  * Returns a mask containing all the squares that can block a rook on the 
  * given square.
- */
+ **/
 static BitBoard generate_rook_blocker_mask(int square)
 {
     int square_rank = square / 8;
@@ -253,7 +253,7 @@ static BitBoard generate_rook_blocker_mask(int square)
 /**
  * Returns a mask containing all the squares that a bishop can attack based
  * off what square it is on and the pieces blocking it.
- */
+ **/
 static BitBoard generate_bishop_attack_mask(int square, BitBoard block)
 {
     int square_rank = square / 8;
@@ -293,7 +293,7 @@ static BitBoard generate_bishop_attack_mask(int square, BitBoard block)
 /**
  * Returns a mask containing all the squares that a rook can attack based off 
  * what square it is on and the pieces blocking it.
- */
+ **/
 static BitBoard generate_rook_attack_mask(int square, BitBoard block)
 {
     int square_rank = square / 8;
@@ -332,7 +332,7 @@ static BitBoard generate_rook_attack_mask(int square, BitBoard block)
 
 /**
  * Returns a pseudo random 64 bit number as a possible magic number candaidate.
- */
+ **/
 static BitBoard magic_number_candidate()
 {
     BitBoard magic_number = 0;
@@ -350,7 +350,7 @@ static BitBoard magic_number_candidate()
  * Generates a working magic number on the given square by trail and error. If
  * bishop_magic_number is set to true it will generate a magic number for bishops,
  * else a magic number for rooks.
- */
+ **/
 U64 generate_magic_number(int square, bool bishop_magic_number)
 {
     BitBoard blocker_boards[4096];
@@ -401,8 +401,8 @@ U64 generate_magic_number(int square, bool bishop_magic_number)
 }
 
 /**
- * Initializes all the information needed to 
- */
+ * Initializes the magic bitboard lookup tables. 
+ **/
 void magic_bitboards_init()
 {
     int bishop_offset = 0, rook_offset = 0;
@@ -446,6 +446,10 @@ void magic_bitboards_init()
     }
 }
 
+/**
+ * Returns the attacks for a bishop on the given square by indexing
+ * the pre-calculated lookup table.
+ **/
 BitBoard lookup_bishop_attacks(int square, BitBoard occupied_squares) 
 {
     BitBoard blocker_board = occupied_squares & MAGIC_BISHOP_TABLE[square].blocker_mask;
@@ -456,6 +460,10 @@ BitBoard lookup_bishop_attacks(int square, BitBoard occupied_squares)
     return MAGIC_BISHOP_TABLE[square].attack_table[blocker_board];
 }
 
+/**
+ * Returns the attacks for a rook on the given square by indexing
+ * the pre-calculated lookup table.
+ **/
 BitBoard lookup_rook_attacks(int square, BitBoard occupied_squares) 
 {
     BitBoard blocker_board = occupied_squares & MAGIC_ROOK_TABLE[square].blocker_mask;
@@ -466,6 +474,10 @@ BitBoard lookup_rook_attacks(int square, BitBoard occupied_squares)
     return MAGIC_ROOK_TABLE[square].attack_table[blocker_board];
 }
 
+/**
+ * Returns the attacks for a queen on the given square by indexing
+ * the pre-calculated lookup table for rooks and bishops.
+ **/
 BitBoard lookup_queen_attacks(int square, BitBoard occupied_squares) 
 {
     return lookup_bishop_attacks(square, occupied_squares) | lookup_rook_attacks(square, occupied_squares);

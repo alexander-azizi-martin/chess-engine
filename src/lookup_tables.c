@@ -124,8 +124,9 @@ const BitBoard MASK_F8_TO_G8 = 0x6000000000000000;
 const BitBoard MASK_B8_TO_D8 = 0xe00000000000000;
 
 /**
- * TODO: write description
- */
+ * Returns an attack mask for white pawns based on the given
+ * Square.
+ **/
 static BitBoard generate_white_pawn_attack_mask(int square)
 {
     BitBoard attacks = 0;
@@ -137,8 +138,9 @@ static BitBoard generate_white_pawn_attack_mask(int square)
 }
 
 /**
- * TODO: write description
- */
+ * Returns an attack mask for black pawns based on the given
+ * Square.
+ **/
 static BitBoard generate_black_pawn_attack_mask(int square)
 {
     BitBoard attacks = 0;
@@ -150,8 +152,9 @@ static BitBoard generate_black_pawn_attack_mask(int square)
 }
 
 /**
- * TODO: write description
- */
+ * Returns an attack mask for knights based on the given
+ * Square.
+ **/
 static BitBoard generate_knight_attack_mask(int square)
 {
     BitBoard attacks = 0;
@@ -169,8 +172,9 @@ static BitBoard generate_knight_attack_mask(int square)
 }
 
 /**
- * TODO: write description
- */
+ * Returns an attack mask for kings based on the given
+ * Square.
+ **/
 static BitBoard generate_king_attack_mask(int square)
 {
     BitBoard attacks = 0;
@@ -183,17 +187,15 @@ static BitBoard generate_king_attack_mask(int square)
 }
 
 /**
- * TODO: write description
- */
+ * Initializes the attack lookup tables with pre-calculated attack masks.
+ **/
 void lookup_tables_init()
 {
-    for (int square = 0; square < 64; square++)
+    for (int square = A1; square <= H8; square++)
     {
         MASK_PAWN_ATTACKS[WHITE][square] = generate_white_pawn_attack_mask(square);
         MASK_PAWN_ATTACKS[BLACK][square] = generate_black_pawn_attack_mask(square);
-
         MASK_KNIGHT_ATTACKS[square] = generate_knight_attack_mask(square);
-
         MASK_KING_ATTACKS[square] = generate_king_attack_mask(square);
     }
 }
