@@ -82,8 +82,81 @@ void chessboard_init(ChessBoard *board, char *fen_str)
     token = strtok(NULL, " ");
     board->num_full_moves = atoi(token);
 
+    board->position_key = chessboard_hash(board);
     board->occupied_squares = board->pieces[WHITE] | board->pieces[BLACK];
     board->empty_squares = ~board->occupied_squares;
+}
+
+/**
+ * Returns a random U64 number.
+ **/
+static U64 generate_rand_number()
+{
+    U64 random_number = 0;
+    random_number |= (U64) rand();
+    random_number |= (U64) (rand() & 0xffff) << 16;
+    random_number |= (U64) (rand() & 0xffff) << 32;
+    random_number |= (U64) (rand() & 0xffff) << 48;
+
+    return random_number;
+}
+
+static U64 PIECE_KEYS[12][64];
+static U64 CASTLE_KEYS[16]; 
+static U64 SIDE_KEY[2];
+static bool KEYS_INITIALIZED = false;
+
+/**
+ * Initializes the keys used to hash a chessboard.
+ **/
+static void init_keys()
+{
+    // Generates keys for PIECE_KEY
+    for (int piece = 0; piece <  12; piece++)
+    {
+        for (int square = A1; square <= H8; square++)
+        {
+            PIECE_KEYS[piece][square] = generate_rand_number();
+        }
+    }
+
+
+    // Generates keys for CASTLE_KEYS
+    for (int castle_permission = 0; castle_permission <  16; castle_permission++)
+    {
+        CASTLE_KEYS[castle_permission] = generate_rand_number();
+    }
+
+    // Generates key for SIDE_KEY
+    SIDE_KEY[WHITE] = generate_rand_number();
+    SIDE_KEY[BLACK] = generate_rand_number();
+}
+
+/**
+ * Returns a unique key based on the board's position.
+ **/
+U64 chessboard_hash(ChessBoard *board)
+{
+    if (!KEYS_INITIALIZED)
+    {
+        init_keys();
+        KEYS_INITIALIZED = true;
+    }
+    
+    U64 hash = 0;
+    for (int piece = WHITE_PAWNS; piece <= BLACK_KING; piece++)
+    {
+        BitBoard piece_bitboard = board->pieces[piece];
+
+        int index;
+        while ((index = bitboard_pop(&piece_bitboard)) != -1)
+            hash ^= PIECE_KEYS[piece - 2][index];
+    }
+
+    hash ^= CASTLE_KEYS[board->castle_permission];
+    hash ^= SIDE_KEY[board->current_color];
+
+    return hash;
 }
 
 /**
@@ -193,10 +266,9 @@ void chessboard_move_piece(ChessBoard *board, Move move)
 bool chessboard_make_move(ChessBoard *board, Move move)
 {
     board->move_history[board->num_moves].move = move;
+    board->move_history[board->num_moves].position_key = board->position_key;
     board->move_history[board->num_moves].castle_permission = board->castle_permission;
-    board->move_history[board->num_moves].en_passent_target = (board->en_passent) 
-        ? bitboard_scan_forward(board->en_passent) 
-        : -1;
+    board->move_history[board->num_moves].en_passent_target = bitboard_pop(&board->en_passent);
     board->num_moves++;
 
     // Shift to change piece color from white to black
@@ -212,9 +284,10 @@ bool chessboard_make_move(ChessBoard *board, Move move)
     }
 
     board->en_passent = 0;
+    board->position_key = chessboard_hash(board);
     board->current_color = !board->current_color;
 
-    // Updates castling permissions and en passent square
+    // Removes castling permission if a king or rook moves
     switch (move.piece)
     {
         case WHITE_ROOKS: 
@@ -272,16 +345,16 @@ bool chessboard_make_move(ChessBoard *board, Move move)
  **/
 void chessboard_undo_move(ChessBoard *board)
 {
-    board->num_moves--;
-    Move move = board->move_history[board->num_moves].move;
-    board->current_color = PieceColor(move.piece);
+    MoveInfo move_info = board->move_history[--board->num_moves];
+    board->current_color = PieceColor(move_info.move.piece);
 
-    chessboard_move_piece(board, move);
+    chessboard_move_piece(board, move_info.move);
 
-    board->castle_permission = board->move_history[board->num_moves].castle_permission;
-    board->en_passent = (board->move_history[board->num_moves].en_passent_target == -1) 
-        ? 0
-        : MASK_SQUARE[board->move_history[board->num_moves].en_passent_target];
+    board->position_key = move_info.position_key;
+    board->castle_permission = move_info.castle_permission;
+    board->en_passent = (move_info.en_passent_target != -1) 
+        ? MASK_SQUARE[move_info.en_passent_target]
+        : 0;
 }
 
 /**

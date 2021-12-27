@@ -17,6 +17,7 @@ typedef enum
 typedef struct
 {
     Move move;
+    U64 position_key;
     U8 en_passent_target;
     U8 castle_permission;
 } MoveInfo;
@@ -37,6 +38,8 @@ typedef struct
 
     int current_color;
 
+    U64 position_key;
+
     MoveInfo move_history[2048];
     int num_moves;
 } ChessBoard;
@@ -45,6 +48,11 @@ typedef struct
  * Initializes a chessboard's pieces with a fen stirng.
  **/
 void chessboard_init(ChessBoard *board, char *fen_str);
+
+/**
+ * Returns a unique key based on the board's position.
+ **/
+U64 chessboard_hash(ChessBoard *board);
 
 /**
  * Returns the piece on the given square.
