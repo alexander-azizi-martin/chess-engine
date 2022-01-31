@@ -55,6 +55,11 @@ void chessboard_init(ChessBoard *board, char *fen_str);
 U64 chessboard_hash(ChessBoard *board);
 
 /**
+ * Initializes the keys used to hash a chessboard.
+ **/
+void chessboard_init_keys(void);
+
+/**
  * Returns the piece on the given square.
  **/
 Piece chessboard_get_piece(ChessBoard *board, BitBoard square_mask);

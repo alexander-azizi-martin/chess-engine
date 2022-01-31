@@ -7,7 +7,6 @@
 #include "chessboard.h"
 #include "lookup_tables.h"
 #include "magic_bitboard.h"
-#include "console.h"
 
 /**
  * Initializes a chessboard's pieces with a fen stirng.
@@ -104,12 +103,11 @@ static U64 generate_rand_number()
 static U64 PIECE_KEYS[12][64];
 static U64 CASTLE_KEYS[16]; 
 static U64 SIDE_KEY[2];
-static bool KEYS_INITIALIZED = false;
 
 /**
  * Initializes the keys used to hash a chessboard.
  **/
-static void init_keys()
+void chessboard_init_keys(void)
 {
     // Generates keys for PIECE_KEY
     for (int piece = 0; piece <  12; piece++)
@@ -136,13 +134,7 @@ static void init_keys()
  * Returns a unique key based on the board's position.
  **/
 U64 chessboard_hash(ChessBoard *board)
-{
-    if (!KEYS_INITIALIZED)
-    {
-        init_keys();
-        KEYS_INITIALIZED = true;
-    }
-    
+{   
     U64 hash = 0;
     for (int piece = WHITE_PAWNS; piece <= BLACK_KING; piece++)
     {
@@ -549,14 +541,7 @@ void chessboard_print(ChessBoard *board)
             int piece = chessboard_get_piece(board, FileRankToSquare(file, rank));
 
             printf(" ");
-            if (PieceColor(piece) == BLACK && piece != EMPTY)
-            {
-                console_setcolor(CONSOLE_BLACK);
-                console_setbgcolor(CONSOLE_WHITE);
-            }
             printf(piece_to_fen(piece));
-
-            console_reset();
         }
         printf("\n");
     }
