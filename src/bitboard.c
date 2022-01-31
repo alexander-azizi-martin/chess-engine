@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdio.h>
-#include <intrin.h>
 #include "bitboard.h"
 #include "lookup_tables.h"
 
