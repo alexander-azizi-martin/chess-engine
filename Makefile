@@ -1,21 +1,47 @@
-CC = gcc
-CFLAGS = -I include -I external
-DEV_CFLAGS = -g -Wall
-PRO_CFLAGS = -O2
+CC=gcc
+CFLAGS=-g -Wall -I include
 
-SRC = $(wildcard src/*.c) $(wildcard external/*.c)
+BIN=bin
+INC=include
 
-.PHONEY: build
+SRC=src
+SRCS=$(wildcard $(SRC)/*.c)
 
-dev: $(SRC)
-	$(CC) $^ main.c $(CFLAGS) -g  -o bin/main
+OBJ=obj
+OBJS=$(patsubst $(SRC)/%.c,$(OBJ)/%.o, $(SRCS))
 
-build: $(SRC)
-	$(CC) $^ main.c $(CFLAGS) $(PRO_CFLAGS) -o bin/main
+TEST=tests
+TESTS=$(wildcard $(TEST)/*.c)
+TESTBINS=$(patsubst $(TEST)/%.c,$(TEST)/$(BIN)/%, $(TESTS))
 
-run: dev
-	./bin/main
+run: $(BIN)/main
+	$<
 
-test_move_generation: $(SRC)
-	$(CC) tests/test_move_generation.c $^ $(CFLAGS) $(DEV_CFLAGS) -o bin/test_move_generation
-	./bin/test_move_generation
+build: $(BIN)/main
+
+test: $(TESTBINS)
+	for test in $(TESTBINS); do $$test --ascii; done
+
+release: CFLAGS=-Wall -O2 -DNDEBUG -I include
+release: clean
+release: $(BIN)/main
+
+$(BIN)/main: $(OBJS) main.c
+	$(CC) $(CFLAGS) $(OBJS) main.c -o $(BIN)/main
+
+$(OBJ)/%.o: $(SRC)/%.c $(INC)/%.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST)/$(BIN)/%: $(TEST)/%.c $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $< -o $@ -lcriterion 
+
+$(OBJ):
+	mkdir $@
+
+$(TEST)/$(BIN):
+	mkdir $@
+
+clean:
+	$(RM) -r $(OBJ)/*
+	$(RM) -r $(TEST)/bin/*
+	$(RM) -r bin/*
